@@ -10,6 +10,11 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
 
+[project.urls]
+Homepage = "https://github.com/abdullahalrifat/jarvis-core"
+Repository = "https://github.com/abdullahalrifat/jarvis-core"
+Issues = "https://github.com/abdullahalrifat/jarvis-core/issues"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
