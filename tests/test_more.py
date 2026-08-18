@@ -10,6 +10,7 @@ from jarvis_core.agents import (
 )
 from jarvis_core.artifacts import FileArtifactStore, MemoryArtifactStore
 from jarvis_core.context import summarize_tool_result
+from jarvis_core.evidence import VerificationStatus, VerificationVerdict
 from jarvis_core.tokens import BudgetExceeded, TokenBudget, TokenLedger
 
 
@@ -45,11 +46,16 @@ class RetryBackend:
     def run(self, *, role, task, context, max_output_tokens):
         if role == "verifier":
             self.verifications += 1
+            passed = self.verifications > 1
             return AgentResult(
                 role=role,
                 summary="check",
-                verified=self.verifications > 1,
-                retryable=True,
+                verdict=VerificationVerdict(
+                    VerificationStatus.PASSED if passed else VerificationStatus.FAILED,
+                    checks=("test",) if passed else (),
+                    failed_checks=() if passed else ("test",),
+                    retry_instruction=None if passed else "fix test",
+                ),
             )
         return AgentResult(role=role, summary=task)
 
