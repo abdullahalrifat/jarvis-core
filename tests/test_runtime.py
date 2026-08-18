@@ -149,9 +149,9 @@ class VerdictBackend:
 
 
 def test_orchestrator_retries_from_structured_verdict():
-    results = SelectiveOrchestrator(
-        VerdictBackend(), TokenLedger(), require_structured_verdict=True
-    ).run("fix tests", profile=TaskProfile.CODE)
+    results = SelectiveOrchestrator(VerdictBackend(), TokenLedger()).run(
+        "fix tests", profile=TaskProfile.CODE
+    )
     assert [item.role for item in results] == [
         "explorer",
         "implementer",
