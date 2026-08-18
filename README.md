@@ -1,21 +1,7 @@
 # Jarvis Core
 
-Shared, dependency-free agent runtime used by the standalone Jarvis CLI and AI
-Stack Server.
+Shared, dependency-free runtime contracts for Jarvis and AI Stack Server.
 
-## Capabilities
-
-- model-independent token estimation and enforceable run/agent/turn budgets;
-- usage ledger with cached-input, tool, output, and compaction accounting;
-- structured tool-result summaries and deterministic transcript compaction;
-- content-addressed artifacts for large evidence and command output;
-- delta-context construction that avoids replaying unchanged material;
-- selective Explorer -> Implementer -> Verifier orchestration.
-
-The package contains no filesystem or process tools. Consumers supply their own
-model backend and product-specific tools.
-
-```bash
-pip install jarvis-agent-core
-pytest
-```
+It provides atomic token budgeting, structured evidence and verification,
+protocol-safe context compaction, content-addressed artifact retrieval,
+versioned role prompts, and selective multi-agent orchestration.
