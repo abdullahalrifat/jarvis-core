@@ -87,7 +87,9 @@ class ArtifactResolver:
         self.store = store
         self.max_bytes = max_bytes
 
-    def read(self, uri: str, *, offset: int = 0, limit: int | None = None) -> dict[str, object]:
+    def read(
+        self, uri: str, *, offset: int = 0, limit: int | None = None
+    ) -> dict[str, object]:
         if offset < 0:
             raise ValueError("offset must be non-negative")
         requested = self.max_bytes if limit is None else limit
@@ -100,6 +102,8 @@ class ArtifactResolver:
             "offset": offset,
             "size": len(payload),
             "content": chunk.decode("utf-8", errors="replace"),
-            "next_offset": offset + len(chunk) if offset + len(chunk) < len(payload) else None,
+            "next_offset": (
+                offset + len(chunk) if offset + len(chunk) < len(payload) else None
+            ),
             "sha256": hashlib.sha256(payload).hexdigest(),
         }
