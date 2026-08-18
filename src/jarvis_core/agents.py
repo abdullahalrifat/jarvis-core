@@ -41,9 +41,21 @@ class AgentBackend(Protocol):
 
 def classify_task(task: str) -> TaskProfile:
     lowered = task.lower()
-    if any(word in lowered for word in ("security", "authentication", "migration", "permission", "payment")):
+    if any(
+        word in lowered
+        for word in ("security", "authentication", "migration", "permission", "payment")
+    ):
         return TaskProfile.HIGH_RISK
-    if any(word in lowered for word in ("architecture", "refactor", "across", "multi-service", "entire repository")):
+    if any(
+        word in lowered
+        for word in (
+            "architecture",
+            "refactor",
+            "across",
+            "multi-service",
+            "entire repository",
+        )
+    ):
         return TaskProfile.COMPLEX
     if any(word in lowered for word in ("fix", "implement", "edit", "test", "review")):
         return TaskProfile.CODE
@@ -130,7 +142,11 @@ class SelectiveOrchestrator:
         verifier = self._run("verifier", task, context, 900)
         results.append(verifier)
         retries = 0
-        while not verifier.verified and verifier.retryable and retries < self.max_verification_retries:
+        while (
+            not verifier.verified
+            and verifier.retryable
+            and retries < self.max_verification_retries
+        ):
             context["verification_failure"] = {
                 "summary": verifier.summary,
                 "evidence": verifier.evidence,
