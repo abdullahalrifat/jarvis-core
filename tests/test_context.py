@@ -4,7 +4,9 @@ from jarvis_core.context import compact_messages, delta_context, summarize_tool_
 
 def test_large_result_becomes_artifact():
     store = MemoryArtifactStore()
-    result = summarize_tool_result("command", "x" * 1000, max_chars=100, artifact_store=store)
+    result = summarize_tool_result(
+        "command", "x" * 1000, max_chars=100, artifact_store=store
+    )
     assert result["artifact"]["uri"].startswith("artifact://sha256/")
     assert len(result["output"]) < 140
 
