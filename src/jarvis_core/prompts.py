@@ -68,7 +68,8 @@ def default_prompt_registry() -> PromptRegistry:
         PromptTemplate(
             "explorer",
             "v1",
-            shared + " Inspect only; identify relevant code, constraints, and evidence.",
+            shared
+            + " Inspect only; identify relevant code, constraints, and evidence.",
             EVIDENCE_CONTRACT,
         )
     )
@@ -76,7 +77,8 @@ def default_prompt_registry() -> PromptRegistry:
         PromptTemplate(
             "risk",
             "v1",
-            shared + " Inspect only; identify security, migration, and regression risks.",
+            shared
+            + " Inspect only; identify security, migration, and regression risks.",
             EVIDENCE_CONTRACT,
         )
     )
@@ -84,7 +86,8 @@ def default_prompt_registry() -> PromptRegistry:
         PromptTemplate(
             "implementer",
             "v1",
-            shared + " Make the smallest coherent change, then report exact changed paths.",
+            shared
+            + " Make the smallest coherent change, then report exact changed paths.",
             {**EVIDENCE_CONTRACT, "changes": ["string"]},
         )
     )
