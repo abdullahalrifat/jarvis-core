@@ -24,12 +24,16 @@ def summarize_tool_result(
     artifact_store: ArtifactStore | None = None,
 ) -> dict[str, Any]:
     """Produce a compact schema while retaining full output as an artifact."""
-    raw = result if isinstance(result, str) else json.dumps(
-        result, ensure_ascii=False, default=str
+    raw = (
+        result
+        if isinstance(result, str)
+        else json.dumps(result, ensure_ascii=False, default=str)
     )
     artifact = None
     if len(raw) > max_chars and artifact_store is not None:
-        artifact = artifact_store.put(raw, "application/json" if not isinstance(result, str) else "text/plain")
+        artifact = artifact_store.put(
+            raw, "application/json" if not isinstance(result, str) else "text/plain"
+        )
 
     if tool_name in {"run_tests", "test", "pytest"} and isinstance(result, dict):
         summary = {
@@ -39,7 +43,9 @@ def summarize_tool_result(
         }
         if result.get("failures"):
             summary["failures"] = result["failures"][:5]
-    elif tool_name in {"search", "search_text", "search_code"} and isinstance(result, dict):
+    elif tool_name in {"search", "search_text", "search_code"} and isinstance(
+        result, dict
+    ):
         matches = result.get("matches", [])
         summary = {
             "matches": matches[:12],
@@ -92,7 +98,11 @@ def compact_messages(
         if name:
             state["tools"].append(name)
         lowered = content.lower()
-        bucket = "failures" if any(word in lowered for word in ("error", "failed", "exception")) else "observations"
+        bucket = (
+            "failures"
+            if any(word in lowered for word in ("error", "failed", "exception"))
+            else "observations"
+        )
         state[bucket].append(_window(content, 500))
         for token in content.replace('"', " ").replace("'", " ").split():
             if "/" in token and "." in token and len(token) < 180:
@@ -102,9 +112,16 @@ def compact_messages(
     for key in ("observations", "failures"):
         state[key] = state[key][-12:]
     serialized = _window(json.dumps(state, ensure_ascii=False), max_summary_chars)
-    compacted = head + [
-        {"role": "system", "content": "Structured state from earlier turns:\n" + serialized}
-    ] + recent
+    compacted = (
+        head
+        + [
+            {
+                "role": "system",
+                "content": "Structured state from earlier turns:\n" + serialized,
+            }
+        ]
+        + recent
+    )
     return compacted, max(0, original - estimate_tokens(compacted))
 
 
