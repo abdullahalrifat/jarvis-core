@@ -1,4 +1,5 @@
 from jarvis_core.agents import AgentResult, SelectiveOrchestrator, TaskProfile
+from jarvis_core.evidence import VerificationStatus, VerificationVerdict
 from jarvis_core.tokens import TokenLedger
 
 
@@ -10,7 +11,12 @@ class Backend:
 
     def run(self, *, role, task, context, max_output_tokens):
         self.roles.append(role)
-        return AgentResult(role=role, summary=task, verified=role == "verifier")
+        verdict = (
+            VerificationVerdict(VerificationStatus.PASSED, checks=("test",))
+            if role == "verifier"
+            else None
+        )
+        return AgentResult(role=role, summary=task, verdict=verdict)
 
 
 def test_code_flow_explores_implements_and_verifies():
