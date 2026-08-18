@@ -78,7 +78,9 @@ class TokenLedger:
             total.compaction_saved_tokens += entry.compaction_saved_tokens
         return total
 
-    def totals(self, agent: str | None = None, *, include_reserved: bool = False) -> Usage:
+    def totals(
+        self, agent: str | None = None, *, include_reserved: bool = False
+    ) -> Usage:
         with self._lock:
             total = self._sum(self.entries, agent)
             if include_reserved:
@@ -106,14 +108,20 @@ class TokenLedger:
         if current.output_tokens + output_tokens > self.budget.max_agent_output:
             raise BudgetExceeded(f"{agent} output token budget exceeded")
 
-    def reserve(self, agent: str, input_tokens: int, output_tokens: int) -> TokenReservation:
+    def reserve(
+        self, agent: str, input_tokens: int, output_tokens: int
+    ) -> TokenReservation:
         with self._lock:
             self._validate(agent, input_tokens, output_tokens)
-            reservation = TokenReservation(str(uuid4()), agent, input_tokens, output_tokens)
+            reservation = TokenReservation(
+                str(uuid4()), agent, input_tokens, output_tokens
+            )
             self._reservations[reservation.id] = reservation
             return reservation
 
-    def commit(self, reservation: TokenReservation, usage: Usage | None = None) -> Usage:
+    def commit(
+        self, reservation: TokenReservation, usage: Usage | None = None
+    ) -> Usage:
         """Commit actual usage and release unused reserved capacity."""
         with self._lock:
             held = self._reservations.pop(reservation.id, None)
@@ -153,7 +161,9 @@ class TokenLedger:
             model=model,
             input_tokens=int(usage.get("input_tokens", usage.get("prompt_tokens", 0))),
             cached_input_tokens=int(usage.get("cached_input_tokens", 0)),
-            output_tokens=int(usage.get("output_tokens", usage.get("completion_tokens", 0))),
+            output_tokens=int(
+                usage.get("output_tokens", usage.get("completion_tokens", 0))
+            ),
         )
 
     def call(
