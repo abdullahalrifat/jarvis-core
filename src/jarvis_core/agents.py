@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Protocol
 
-from .evidence import Evidence, EvidenceLedger, VerificationStatus, VerificationVerdict
+from .evidence import Evidence, EvidenceLedger, VerificationVerdict
 from .tokens import TokenLedger
 
 
@@ -24,14 +24,6 @@ class AgentResult:
     evidence: list[Evidence | dict[str, Any]] = field(default_factory=list)
     changes: list[str] = field(default_factory=list)
     verdict: VerificationVerdict | None = None
-    # Compatibility for existing Jarvis/Server consumers during migration.
-    verified: bool = False
-    retryable: bool = False
-
-    def __post_init__(self) -> None:
-        if self.verdict is not None:
-            self.verified = self.verdict.passed
-            self.retryable = self.verdict.retryable
 
 
 class AgentBackend(Protocol):
@@ -85,12 +77,10 @@ class SelectiveOrchestrator:
         ledger: TokenLedger,
         *,
         max_verification_retries: int = 1,
-        require_structured_verdict: bool = False,
     ) -> None:
         self.backend = backend
         self.ledger = ledger
         self.max_verification_retries = max_verification_retries
-        self.require_structured_verdict = require_structured_verdict
         self.evidence = EvidenceLedger()
 
     def _run(
@@ -124,26 +114,9 @@ class SelectiveOrchestrator:
         return result
 
     def _verdict(self, result: AgentResult) -> VerificationVerdict:
-        if result.verdict:
-            return result.verdict
-        if self.require_structured_verdict:
-            return VerificationVerdict(
-                VerificationStatus.BLOCKED,
-                failed_checks=("verifier returned no structured verdict",),
-            )
-        if result.verified:
-            return VerificationVerdict(
-                VerificationStatus.PASSED, checks=(result.summary,)
-            )
-        return VerificationVerdict(
-            (
-                VerificationStatus.FAILED
-                if result.retryable
-                else VerificationStatus.BLOCKED
-            ),
-            failed_checks=(result.summary,),
-            retry_instruction=result.summary if result.retryable else None,
-        )
+        if result.verdict is None:
+            raise ValueError("verifier must return a structured VerificationVerdict")
+        return result.verdict
 
     def run(
         self,
