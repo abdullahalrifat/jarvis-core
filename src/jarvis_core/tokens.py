@@ -52,9 +52,11 @@ class TokenLedger:
     entries: list[Usage] = field(default_factory=list)
 
     def totals(self, agent: str | None = None) -> Usage:
-        selected = self.entries if agent is None else [
-            entry for entry in self.entries if entry.agent == agent
-        ]
+        selected = (
+            self.entries
+            if agent is None
+            else [entry for entry in self.entries if entry.agent == agent]
+        )
         total = Usage(agent=agent or "run")
         for entry in selected:
             total.input_tokens += entry.input_tokens
