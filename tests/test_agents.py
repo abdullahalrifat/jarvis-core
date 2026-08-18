@@ -18,10 +18,16 @@ def test_code_flow_explores_implements_and_verifies():
     results = SelectiveOrchestrator(backend, TokenLedger()).run(
         "fix the test", profile=TaskProfile.CODE
     )
-    assert [result.role for result in results] == ["explorer", "implementer", "verifier"]
+    assert [result.role for result in results] == [
+        "explorer",
+        "implementer",
+        "verifier",
+    ]
 
 
 def test_simple_flow_uses_one_agent():
     backend = Backend()
-    SelectiveOrchestrator(backend, TokenLedger()).run("explain this", profile=TaskProfile.SIMPLE)
+    SelectiveOrchestrator(backend, TokenLedger()).run(
+        "explain this", profile=TaskProfile.SIMPLE
+    )
     assert backend.roles == ["implementer"]
