@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v*"
 
 permissions:
   contents: read
@@ -24,6 +24,10 @@ jobs:
         shell: bash
         run: |
           package_version="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([abrc][0-9]+)?$ ]]; then
+            echo "Tag $GITHUB_REF_NAME is not a supported Python release tag" >&2
+            exit 1
+          fi
           tag_version="${GITHUB_REF_NAME#v}"
           if [[ "$tag_version" != "$package_version" ]]; then
             echo "Tag $GITHUB_REF_NAME does not match package version $package_version" >&2
