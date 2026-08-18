@@ -37,15 +37,35 @@ class AgentResult:
 class AgentBackend(Protocol):
     model: str
 
-    def run(self, *, role: str, task: str, context: dict[str, Any],
-            max_output_tokens: int) -> AgentResult: ...
+    def run(
+        self, *, role: str, task: str, context: dict[str, Any], max_output_tokens: int
+    ) -> AgentResult: ...
 
 
 def classify_task(task: str) -> TaskProfile:
     lowered = task.lower()
-    if any(word in lowered for word in ("security", "authentication", "migration", "permission", "payment", "credential")):
+    if any(
+        word in lowered
+        for word in (
+            "security",
+            "authentication",
+            "migration",
+            "permission",
+            "payment",
+            "credential",
+        )
+    ):
         return TaskProfile.HIGH_RISK
-    if any(word in lowered for word in ("architecture", "refactor", "across", "multi-service", "entire repository")):
+    if any(
+        word in lowered
+        for word in (
+            "architecture",
+            "refactor",
+            "across",
+            "multi-service",
+            "entire repository",
+        )
+    ):
         return TaskProfile.COMPLEX
     if any(word in lowered for word in ("fix", "implement", "edit", "test", "review")):
         return TaskProfile.CODE
@@ -59,25 +79,42 @@ def _evidence_dicts(items: list[Evidence | dict[str, Any]]) -> list[dict[str, An
 class SelectiveOrchestrator:
     """Use extra agents only when task shape justifies their token cost."""
 
-    def __init__(self, backend: AgentBackend, ledger: TokenLedger, *,
-                 max_verification_retries: int = 1,
-                 require_structured_verdict: bool = False) -> None:
+    def __init__(
+        self,
+        backend: AgentBackend,
+        ledger: TokenLedger,
+        *,
+        max_verification_retries: int = 1,
+        require_structured_verdict: bool = False,
+    ) -> None:
         self.backend = backend
         self.ledger = ledger
         self.max_verification_retries = max_verification_retries
         self.require_structured_verdict = require_structured_verdict
         self.evidence = EvidenceLedger()
 
-    def _run(self, role: str, task: str, context: dict[str, Any],
-             max_output_tokens: int) -> AgentResult:
+    def _run(
+        self, role: str, task: str, context: dict[str, Any], max_output_tokens: int
+    ) -> AgentResult:
         if getattr(self.backend, "metered", False):
-            result = self.backend.run(role=role, task=task, context=context, max_output_tokens=max_output_tokens)
+            result = self.backend.run(
+                role=role,
+                task=task,
+                context=context,
+                max_output_tokens=max_output_tokens,
+            )
         else:
             result = self.ledger.call(
-                agent=role, model=self.backend.model,
+                agent=role,
+                model=self.backend.model,
                 prompt={"role": role, "task": task, "context": context},
                 max_output_tokens=max_output_tokens,
-                invoke=lambda: self.backend.run(role=role, task=task, context=context, max_output_tokens=max_output_tokens),
+                invoke=lambda: self.backend.run(
+                    role=role,
+                    task=task,
+                    context=context,
+                    max_output_tokens=max_output_tokens,
+                ),
             )
         if not isinstance(result, AgentResult):
             raise TypeError("agent backend must return AgentResult")
@@ -95,15 +132,26 @@ class SelectiveOrchestrator:
                 failed_checks=("verifier returned no structured verdict",),
             )
         if result.verified:
-            return VerificationVerdict(VerificationStatus.PASSED, checks=(result.summary,))
+            return VerificationVerdict(
+                VerificationStatus.PASSED, checks=(result.summary,)
+            )
         return VerificationVerdict(
-            VerificationStatus.FAILED if result.retryable else VerificationStatus.BLOCKED,
+            (
+                VerificationStatus.FAILED
+                if result.retryable
+                else VerificationStatus.BLOCKED
+            ),
             failed_checks=(result.summary,),
             retry_instruction=result.summary if result.retryable else None,
         )
 
-    def run(self, task: str, context: dict[str, Any] | None = None, *,
-            profile: TaskProfile | None = None) -> list[AgentResult]:
+    def run(
+        self,
+        task: str,
+        context: dict[str, Any] | None = None,
+        *,
+        profile: TaskProfile | None = None,
+    ) -> list[AgentResult]:
         context = dict(context or {})
         profile = profile or classify_task(task)
         if profile is TaskProfile.SIMPLE:
@@ -111,23 +159,41 @@ class SelectiveOrchestrator:
         results: list[AgentResult] = []
         explorer = self._run("explorer", task, context, 900)
         results.append(explorer)
-        context["exploration"] = {"summary": explorer.summary, "evidence": _evidence_dicts(explorer.evidence)}
+        context["exploration"] = {
+            "summary": explorer.summary,
+            "evidence": _evidence_dicts(explorer.evidence),
+        }
         if profile is TaskProfile.HIGH_RISK:
             risk = self._run("risk", task, context, 700)
             results.append(risk)
-            context["risk"] = {"summary": risk.summary, "evidence": _evidence_dicts(risk.evidence)}
+            context["risk"] = {
+                "summary": risk.summary,
+                "evidence": _evidence_dicts(risk.evidence),
+            }
         implementer = self._run("implementer", task, context, 1_500)
         results.append(implementer)
-        context["implementation"] = {"summary": implementer.summary, "changes": implementer.changes, "evidence": _evidence_dicts(implementer.evidence)}
+        context["implementation"] = {
+            "summary": implementer.summary,
+            "changes": implementer.changes,
+            "evidence": _evidence_dicts(implementer.evidence),
+        }
         verifier = self._run("verifier", task, context, 900)
         results.append(verifier)
         verdict = self._verdict(verifier)
         retries = 0
-        while not verdict.passed and verdict.retryable and retries < self.max_verification_retries:
+        while (
+            not verdict.passed
+            and verdict.retryable
+            and retries < self.max_verification_retries
+        ):
             context["verification_failure"] = verdict.to_dict()
             implementer = self._run("implementer", task, context, 1_200)
             results.append(implementer)
-            context["implementation"] = {"summary": implementer.summary, "changes": implementer.changes, "evidence": _evidence_dicts(implementer.evidence)}
+            context["implementation"] = {
+                "summary": implementer.summary,
+                "changes": implementer.changes,
+                "evidence": _evidence_dicts(implementer.evidence),
+            }
             verifier = self._run("verifier", task, context, 700)
             results.append(verifier)
             verdict = self._verdict(verifier)
