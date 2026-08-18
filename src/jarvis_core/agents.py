@@ -71,19 +71,27 @@ class SelectiveOrchestrator:
         context: dict[str, Any],
         max_output_tokens: int,
     ) -> AgentResult:
-        prompt = {"role": role, "task": task, "context": context}
-        result = self.ledger.call(
-            agent=role,
-            model=self.backend.model,
-            prompt=prompt,
-            max_output_tokens=max_output_tokens,
-            invoke=lambda: self.backend.run(
+        if getattr(self.backend, "metered", False):
+            result = self.backend.run(
                 role=role,
                 task=task,
                 context=context,
                 max_output_tokens=max_output_tokens,
-            ),
-        )
+            )
+        else:
+            prompt = {"role": role, "task": task, "context": context}
+            result = self.ledger.call(
+                agent=role,
+                model=self.backend.model,
+                prompt=prompt,
+                max_output_tokens=max_output_tokens,
+                invoke=lambda: self.backend.run(
+                    role=role,
+                    task=task,
+                    context=context,
+                    max_output_tokens=max_output_tokens,
+                ),
+            )
         if not isinstance(result, AgentResult):
             raise TypeError("agent backend must return AgentResult")
         return result
