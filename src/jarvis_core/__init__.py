@@ -27,7 +27,7 @@ from .evidence import (
     VerificationVerdict,
 )
 from .prompts import PromptRegistry, PromptTemplate, default_prompt_registry
-from .tokens import BudgetExceeded, TokenBudget, TokenLedger, TokenReservation, Usage
+from .tokens import BudgetExceeded, TokenBudget, TokenLedger, TokenReservation, Usage, estimate_tokens
 
 __all__ = [
     "CapabilityRegistry",
@@ -51,6 +51,7 @@ __all__ = [
     "Artifact",
     "ArtifactResolver",
     "BudgetExceeded",
+    "estimate_tokens",
     "Evidence",
     "EvidenceLedger",
     "EvidenceStatus",
