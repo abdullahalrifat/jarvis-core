@@ -32,48 +32,33 @@ Python 3.10+ is required. The package is typed and has no runtime dependencies.
 
 Jarvis Core does not access files, execute commands, call model endpoints, start
 MCP processes, persist product sessions, enforce Server tenancy, or approve
-changes. Jarvis and Server implement those concerns independently so a local CLI
-never inherits remote-control-plane requirements.
+changes. Jarvis and Server implement those concerns independently.
 
-## Basic examples
+## Automated releases
 
-```python
-from jarvis_core import (
-    CapabilityRegistry,
-    ModelCapabilities,
-    ModelProfile,
-    classify_failure,
-)
+Merging a new version to `main` is sufficient. The Release workflow:
 
-registry = CapabilityRegistry([
-    ModelProfile(
-        name="coder",
-        provider="openai",
-        model="open-coder",
-        base_url="https://models.example/v1",
-        priority=10,
-        capabilities=ModelCapabilities(
-            tool_calling=True,
-            structured_output=True,
-            context_tokens=131_072,
-        ),
-    )
-])
-profile = registry.select(required=("tool_calling",))
-decision = classify_failure("503 gateway unavailable")
-```
+1. validates the version and distributions;
+2. builds the wheel and source archive;
+3. creates SHA-256 checksums and build-provenance attestations;
+4. creates `v<project.version>` and the GitHub Release when that version is new;
+5. uploads all artifacts without depending on PyPI.
 
-Use `compact_messages` before an endpoint context overflow,
-`normalize_search_results` plus `citation_context` for web evidence,
-`TraceRecorder` for redacted replay data, and `run_evals` for deterministic
-regression cases.
+Repeated pushes with the same project version leave the existing release
+unchanged. Increment `project.version` for every new release.
 
-## Release and compatibility
+PyPI publication is optional. After Trusted Publishing is repaired, set the
+repository variable `PUBLISH_PYPI=true`, or manually dispatch the Release
+workflow with `publish_pypi` enabled. A PyPI problem cannot block the GitHub
+Release.
 
-Jarvis and Server pin a compatible minor range. Release Core first, publish it,
-then validate and release each consumer. There is intentionally no legacy
-compatibility layer: incompatible contract changes require a major version or a
-coordinated pre-1.0 minor release.
+Consumers may temporarily install the immutable GitHub wheel or a full commit
+archive. Jarvis and Server CI bootstrap the pinned Core commit automatically;
+developers do not run a separate installation command.
 
-See [CHANGELOG.md](CHANGELOG.md). Every contract must remain provider-neutral,
-bounded, serializable, and covered by tests.
+## Release compatibility
+
+Jarvis and Server pin a compatible minor range. Release Core first, then
+validate and release each consumer. There is intentionally no legacy
+compatibility layer: incompatible contracts require a coordinated version
+change.
