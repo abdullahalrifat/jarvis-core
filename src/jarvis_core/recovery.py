@@ -32,13 +32,41 @@ _RULES = (
     (FailureKind.RATE_LIMIT, ("429", "rate limit", "too many requests"), "backoff"),
     (FailureKind.TIMEOUT, ("timeout", "timed out", "deadline"), "retry_smaller"),
     (FailureKind.CONTEXT_OVERFLOW, ("context length", "too many tokens"), "compact"),
-    (FailureKind.MALFORMED_TOOL_CALL, ("invalid tool", "malformed tool", "arguments"), "repair_schema"),
-    (FailureKind.UNKNOWN_PATH, ("file not found", "unknown path", "no such file"), "refresh_repository_map"),
-    (FailureKind.PATCH_CONFLICT, ("old_string not found", "patch failed", "stale"), "reread_and_patch"),
-    (FailureKind.TOOL_REFUSAL, ("cannot call tools", "native tool calling failed"), "switch_model"),
-    (FailureKind.TEST_FAILURE, ("test failed", "tests failed", "assertionerror"), "repair_from_test_evidence"),
-    (FailureKind.REPEATED_ACTION, ("repeated action", "already executed", "duplicate tool"), "replan"),
-    (FailureKind.TRANSPORT, ("connection", "gateway", "unavailable", "502", "503", "504"), "retry"),
+    (
+        FailureKind.MALFORMED_TOOL_CALL,
+        ("invalid tool", "malformed tool", "arguments"),
+        "repair_schema",
+    ),
+    (
+        FailureKind.UNKNOWN_PATH,
+        ("file not found", "unknown path", "no such file"),
+        "refresh_repository_map",
+    ),
+    (
+        FailureKind.PATCH_CONFLICT,
+        ("old_string not found", "patch failed", "stale"),
+        "reread_and_patch",
+    ),
+    (
+        FailureKind.TOOL_REFUSAL,
+        ("cannot call tools", "native tool calling failed"),
+        "switch_model",
+    ),
+    (
+        FailureKind.TEST_FAILURE,
+        ("test failed", "tests failed", "assertionerror"),
+        "repair_from_test_evidence",
+    ),
+    (
+        FailureKind.REPEATED_ACTION,
+        ("repeated action", "already executed", "duplicate tool"),
+        "replan",
+    ),
+    (
+        FailureKind.TRANSPORT,
+        ("connection", "gateway", "unavailable", "502", "503", "504"),
+        "retry",
+    ),
 )
 
 
