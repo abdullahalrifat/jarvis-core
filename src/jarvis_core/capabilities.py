@@ -35,6 +35,7 @@ class ModelProfile:
     capabilities: ModelCapabilities = field(default_factory=ModelCapabilities)
     priority: int = 0
     enabled: bool = True
+    api_key_env: str | None = None
 
     def to_dict(self) -> dict[str, object]:
         return {**asdict(self), "capabilities": asdict(self.capabilities)}

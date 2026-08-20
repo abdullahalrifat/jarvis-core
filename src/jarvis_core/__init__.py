@@ -15,6 +15,7 @@ from .artifacts import (
 )
 from .capabilities import CapabilityRegistry, ModelCapabilities, ModelProfile
 from .context import compact_messages, delta_context, summarize_tool_result
+from .messages import canonical_message, to_anthropic_messages, to_openai_messages
 from .evals import EvalCase, EvalResult, run_evals, score_output
 from .recovery import FailureKind, RecoveryDecision, classify_failure
 from .search import SearchResult, citation_context, normalize_search_results
@@ -75,7 +76,10 @@ __all__ = [
     "VerificationStatus",
     "VerificationVerdict",
     "classify_task",
+    "canonical_message",
     "compact_messages",
+    "to_anthropic_messages",
+    "to_openai_messages",
     "default_prompt_registry",
     "delta_context",
     "summarize_tool_result",
