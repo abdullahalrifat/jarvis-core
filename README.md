@@ -8,3 +8,5 @@ versioned role prompts, selective multi-agent orchestration, capability-aware mo
 
 
 Install the published runtime with `pip install jarvis-agent-core`. The package is typed and intentionally has no runtime dependencies.
+
+Both consumers can therefore share routing, recovery, evidence, tracing, and evaluation behavior without sharing product-specific tools or storage.
