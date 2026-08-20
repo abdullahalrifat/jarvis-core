@@ -35,7 +35,9 @@ class SourceAssessment:
     published_at: datetime | None = None
     supports: bool = True
 
-    def freshness(self, now: datetime | None = None, half_life_days: int = 365) -> float:
+    def freshness(
+        self, now: datetime | None = None, half_life_days: int = 365
+    ) -> float:
         if self.published_at is None:
             return 0.5
         current = now or datetime.now(timezone.utc)
@@ -82,7 +84,9 @@ class ClaimAssessment:
         )
         diversity = min(self.independent_domains / 3, 1.0)
         contradiction_penalty = 0.35 if self.contradictions else 0.0
-        return max(0.0, min(1.0, 0.65 * quality + 0.35 * diversity - contradiction_penalty))
+        return max(
+            0.0, min(1.0, 0.65 * quality + 0.35 * diversity - contradiction_penalty)
+        )
 
 
 def rank_sources(sources: list[SourceAssessment]) -> list[SourceAssessment]:
