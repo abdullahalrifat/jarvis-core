@@ -1,22 +1,45 @@
 # Jarvis Core
 
-`jarvis-agent-core` is the small, dependency-free runtime shared by standalone
-Jarvis and AI Stack Server. It standardizes agent behavior without sharing
-product-specific tools, storage, permissions, or deployment policy.
+[![Validate](https://github.com/abdullahalrifat/jarvis-core/actions/workflows/validate.yml/badge.svg)](https://github.com/abdullahalrifat/jarvis-core/actions/workflows/validate.yml)
+[![Release](https://img.shields.io/github/v/release/abdullahalrifat/jarvis-core)](https://github.com/abdullahalrifat/jarvis-core/releases)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+`jarvis-agent-core` is the small, typed, dependency-free Python runtime shared
+by standalone [Jarvis](https://github.com/abdullahalrifat/jarvis) and
+[AI Stack Server](https://github.com/abdullahalrifat/ai-stack). It standardizes
+portable agent behavior without owning product-specific tools, storage,
+permissions, credentials, or deployment policy.
+
+The project is public and MIT-licensed. You may use it in your own agent,
+automation, research, or developer-tool project.
 
 ## Install
 
+Python 3.10 or newer is required. Until PyPI publication is available, install
+the signed release artifact:
+
 ```bash
-pip install jarvis-agent-core
+python -m pip install \
+  "jarvis-agent-core @ https://github.com/abdullahalrifat/jarvis-core/releases/download/v0.2.0/jarvis_agent_core-0.2.0-py3-none-any.whl#sha256=285cddb3b5ce917d4acd406825bfd640e3bb3d1a5f66fec01580f4edbdb68bf6"
 ```
 
-Python 3.10+ is required. The package is typed and has no runtime dependencies.
+Or install a checkout for development:
 
-## What it owns
+```bash
+git clone https://github.com/abdullahalrifat/jarvis-core.git
+cd jarvis-core
+python -m pip install -e . -r requirements-dev.txt
+python -m pytest
+```
+
+## Capabilities
+
+Core provides:
 
 - atomic token reservations, refunds, and provider usage accounting;
-- provider-neutral context compaction that preserves OpenAI and Anthropic tool
-  call/result groups;
+- provider-neutral context compaction that preserves OpenAI and Anthropic
+  tool-call/result groups;
 - untrusted-state boundaries for repository, attachment, connector, and web
   content;
 - content-addressed memory/file artifacts with bounded retrieval;
@@ -28,37 +51,85 @@ Python 3.10+ is required. The package is typed and has no runtime dependencies.
 - redacted, replayable JSONL trace events;
 - dependency-free evaluation cases, scoring, and runners.
 
-## What it does not own
+Core deliberately does not access files, execute commands, call model
+endpoints, start MCP processes, persist product sessions, enforce tenancy, or
+approve changes. Consumers supply those backends and policies.
 
-Jarvis Core does not access files, execute commands, call model endpoints, start
-MCP processes, persist product sessions, enforce Server tenancy, or approve
-changes. Jarvis and Server implement those concerns independently.
+## Library example
 
-## Automated releases
+```python
+from jarvis_core import (
+    CapabilityRegistry,
+    ModelCapabilities,
+    ModelProfile,
+    TokenBudget,
+    TokenLedger,
+    Usage,
+)
 
-Merging a new version to `main` is sufficient. The Release workflow:
+ledger = TokenLedger(TokenBudget(total_tokens=10_000))
+reservation = ledger.reserve(2_000)
 
-1. validates the version and distributions;
-2. builds the wheel and source archive;
-3. creates SHA-256 checksums and build-provenance attestations;
-4. creates `v<project.version>` and the GitHub Release when that version is new;
-5. uploads all artifacts without depending on PyPI.
+# Call your provider, then account for its reported usage.
+reservation.commit(Usage(input_tokens=650, output_tokens=180))
 
-Repeated pushes with the same project version leave the existing release
-unchanged. Increment `project.version` for every new release.
+registry = CapabilityRegistry()
+registry.register(
+    ModelProfile(
+        name="local-coder",
+        model="my-model",
+        capabilities=ModelCapabilities(tool_calling=True),
+    )
+)
+```
 
-PyPI publication is optional. After Trusted Publishing is repaired, set the
-repository variable `PUBLISH_PYPI=true`, or manually dispatch the Release
-workflow with `publish_pypi` enabled. A PyPI problem cannot block the GitHub
-Release.
+The package exports typed contracts from `jarvis_core`. See
+[`src/jarvis_core/__init__.py`](src/jarvis_core/__init__.py) for the supported
+top-level import surface and the tests for executable examples.
 
-Consumers may temporarily install the immutable GitHub wheel or a full commit
-archive. Jarvis and Server CI bootstrap the pinned Core commit automatically;
-developers do not run a separate installation command.
+## Compatibility policy
 
-## Release compatibility
+- Versioning follows semantic versioning while the public API stabilizes.
+- Patch releases should remain compatible within the same minor line.
+- Deprecations are documented in [CHANGELOG.md](CHANGELOG.md).
+- Breaking contracts require a coordinated Core, Jarvis, and Server release.
+- Jarvis and Server must pin an exact verified release artifact or a compatible
+  published minor range.
 
-Jarvis and Server pin a compatible minor range. Release Core first, then
-validate and release each consumer. There is intentionally no legacy
-compatibility layer: incompatible contracts require a coordinated version
-change.
+Current consumer compatibility:
+
+| Core | Jarvis | AI Stack Server | Python |
+| --- | --- | --- | --- |
+| 0.2.x | Current `main` | Current `main` | 3.10+ |
+
+## Development and contribution
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change. All
+contributors must follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+```bash
+black --check src tests
+ruff check src tests --select E9,F63,F7,F82
+pytest -q --cov=jarvis_core --cov-report=term-missing --cov-fail-under=85
+python -m build
+python -m twine check dist/*
+```
+
+Use GitHub Issues for reproducible bugs and focused feature requests. Read
+[SUPPORT.md](SUPPORT.md) for support boundaries. Report vulnerabilities
+privately according to [SECURITY.md](SECURITY.md).
+
+## Releases and supply chain
+
+Merging a new version to `main` runs validation and creates a GitHub Release
+when that version is new. The workflow builds the wheel and source archive,
+creates SHA-256 checksums, and publishes build-provenance attestations. PyPI is
+an optional additional channel and cannot block the GitHub Release.
+
+Release consumers should use the immutable artifact URL plus SHA-256 shown
+above. Increment `project.version` for every release; an existing release is
+never replaced automatically.
+
+## License
+
+Jarvis Core is available under the [MIT License](LICENSE).
