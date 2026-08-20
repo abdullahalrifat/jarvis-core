@@ -19,7 +19,7 @@ def test_compaction_preserves_recent_messages():
 
 
 def test_delta_context_only_includes_changes():
-    result = delta_context(previous={"a": 1, "b": 2}, current={"a": 1, "b": 3, "c": 4})
+    result = delta_context(\n        previous={"a": 1, "b": 2}, current={"a": 1, "b": 3, "c": 4}\n    )
     assert result["changed"] == {"b": 3, "c": 4}
 
 
@@ -47,7 +47,7 @@ def test_compaction_keeps_anthropic_tool_exchange_together():
         {
             "role": "assistant",
             "content": [
-                {"type": "tool_use", "id": "old-call", "name": "read_file", "input": {}}
+                {\n                    "type": "tool_use",\n                    "id": "old-call",\n                    "name": "read_file",\n                    "input": {},\n                }
             ],
         },
         {
@@ -64,7 +64,7 @@ def test_compaction_keeps_anthropic_tool_exchange_together():
         {
             "role": "assistant",
             "content": [
-                {"type": "tool_use", "id": "new-call", "name": "test", "input": {}}
+                {\n                    "type": "tool_use",\n                    "id": "new-call",\n                    "name": "test",\n                    "input": {},\n                }
             ],
         },
         {
