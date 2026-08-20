@@ -50,9 +50,13 @@ def to_openai_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
             if calls:
                 message["tool_calls"] = calls
             converted.append(message)
-        elif role == "user" and isinstance(content, list) and any(
-            isinstance(block, dict) and block.get("type") == "tool_result"
-            for block in content
+        elif (
+            role == "user"
+            and isinstance(content, list)
+            and any(
+                isinstance(block, dict) and block.get("type") == "tool_result"
+                for block in content
+            )
         ):
             for block in content:
                 if isinstance(block, dict) and block.get("type") == "tool_result":
