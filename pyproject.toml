@@ -16,12 +16,17 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[project.urls]
+Homepage = "https://github.com/abdullahalrifat/jarvis-core"
+Repository = "https://github.com/abdullahalrifat/jarvis-core"
+Issues = "https://github.com/abdullahalrifat/jarvis-core/issues"
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+jarvis_core = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-
-[tool.setuptools.package-data]
-jarvis_core = ["py.typed"]
