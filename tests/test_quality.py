@@ -1,8 +1,16 @@
 import pytest
 
 from jarvis_core import (
-    ClaimProof, CompletionRequirement, EvidenceGate, ProofKind, QualityMetrics,
-    RouteCandidate, Scope, TaskAnalysis, adaptive_plan, route_roles,
+    ClaimProof,
+    CompletionRequirement,
+    EvidenceGate,
+    ProofKind,
+    QualityMetrics,
+    RouteCandidate,
+    Scope,
+    TaskAnalysis,
+    adaptive_plan,
+    route_roles,
     stable_cache_key,
 )
 
@@ -22,10 +30,15 @@ def test_simple_task_avoids_multi_agent_token_cost():
 
 
 def test_role_router_prefers_quality_and_model_diversity():
-    routes = route_roles(("implementer", "verifier"), (
-        RouteCandidate("fast", "qwen", "openai", .7, .9, .9, .1, .1),
-        RouteCandidate("strong", "claude", "anthropic", .95, .9, .95, .3, .4),
-    ))
+    routes = route_roles(
+        ("implementer", "verifier"),
+        (
+            RouteCandidate("fast", "qwen", "openai", 0.7, 0.9, 0.9, 0.1, 0.1),
+            RouteCandidate(
+                "strong", "claude", "anthropic", 0.95, 0.9, 0.95, 0.3, 0.4
+            ),
+        ),
+    )
     assert routes[0].model == "claude"
     assert routes[1].model == "qwen"
 
@@ -54,8 +67,17 @@ def test_analysis_validation_and_cache_stability():
 def test_quality_metrics_summary():
     metrics = QualityMetrics()
     metrics.record(success=True, latency_ms=100, input_tokens=10, output_tokens=5)
-    metrics.record(success=False, latency_ms=300, input_tokens=20, output_tokens=5, tool_failures=2)
+    metrics.record(
+        success=False,
+        latency_ms=300,
+        input_tokens=20,
+        output_tokens=5,
+        tool_failures=2,
+    )
     assert metrics.summary() == {
-        "runs": 2.0, "success_rate": .5, "avg_latency_ms": 200,
-        "avg_tokens": 20, "avg_tool_failures": 1,
+        "runs": 2.0,
+        "success_rate": 0.5,
+        "avg_latency_ms": 200,
+        "avg_tokens": 20,
+        "avg_tool_failures": 1,
     }
