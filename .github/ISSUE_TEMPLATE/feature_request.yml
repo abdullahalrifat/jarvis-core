@@ -1,0 +1,31 @@
+name: Feature request
+description: Propose a provider-neutral Jarvis Core capability
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: What user or consumer problem should Core solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the public contract and expected outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Product boundary
+      description: Explain why this belongs in shared Core rather than Jarvis or Server.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and alternatives
+      description: Note API, migration, security, and dependency implications.
