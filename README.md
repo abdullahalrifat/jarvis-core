@@ -67,17 +67,22 @@ from jarvis_core import (
     Usage,
 )
 
-ledger = TokenLedger(TokenBudget(total_tokens=10_000))
-reservation = ledger.reserve(2_000)
+ledger = TokenLedger(TokenBudget(max_run_input=10_000, max_run_output=2_000))
+reservation = ledger.reserve("implementer", input_tokens=2_000, output_tokens=500)
 
 # Call your provider, then account for its reported usage.
-reservation.commit(Usage(input_tokens=650, output_tokens=180))
+ledger.commit(
+    reservation,
+    Usage(agent="implementer", model="my-model", input_tokens=650, output_tokens=180),
+)
 
 registry = CapabilityRegistry()
-registry.register(
+registry.add(
     ModelProfile(
         name="local-coder",
+        provider="openai",
         model="my-model",
+        base_url="http://127.0.0.1:8000/v1",
         capabilities=ModelCapabilities(tool_calling=True),
     )
 )
