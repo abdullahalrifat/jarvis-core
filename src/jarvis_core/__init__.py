@@ -36,6 +36,22 @@ from .tokens import (
     Usage,
     estimate_tokens,
 )
+from .quality import (
+    AdaptivePlan,
+    ClaimProof,
+    CompletionAudit,
+    CompletionRequirement,
+    EvidenceGate,
+    ProofKind,
+    QualityMetrics,
+    RoleRoute,
+    RouteCandidate,
+    Scope,
+    TaskAnalysis,
+    adaptive_plan,
+    route_roles,
+    stable_cache_key,
+)
 
 __all__ = [
     "CapabilityRegistry",
@@ -83,6 +99,20 @@ __all__ = [
     "default_prompt_registry",
     "delta_context",
     "summarize_tool_result",
+    "AdaptivePlan",
+    "ClaimProof",
+    "CompletionAudit",
+    "CompletionRequirement",
+    "EvidenceGate",
+    "ProofKind",
+    "QualityMetrics",
+    "RoleRoute",
+    "RouteCandidate",
+    "Scope",
+    "TaskAnalysis",
+    "adaptive_plan",
+    "route_roles",
+    "stable_cache_key",
 ]
 
 from .benchmarks import BenchmarkObservation, BenchmarkRegistry
