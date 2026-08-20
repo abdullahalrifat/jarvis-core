@@ -11,7 +11,12 @@ from jarvis_core.policy import (
     MemoryRecord,
     resolve_instructions,
 )
-from jarvis_core.resilience import CircuitState, IdempotencyLedger, ProviderHealth, ProviderPool
+from jarvis_core.resilience import (
+    CircuitState,
+    IdempotencyLedger,
+    ProviderHealth,
+    ProviderPool,
+)
 from jarvis_core.review import ChangeTransaction, ReviewHunk, ReviewState
 from jarvis_core.verification import (
     ClaimAssessment,
@@ -31,9 +36,11 @@ def test_provider_pool_falls_back_and_tracks_health():
     pool.health["good"] = ProviderHealth("good")
 
     result = pool.call(
-        lambda provider: (_ for _ in ()).throw(RuntimeError("down"))
-        if provider == "bad"
-        else "answer"
+        lambda provider: (
+            (_ for _ in ()).throw(RuntimeError("down"))
+            if provider == "bad"
+            else "answer"
+        )
     )
 
     assert result == "answer"
@@ -92,10 +99,14 @@ def test_hierarchical_instructions_memory_and_attachment_budget(tmp_path):
     instructions = [
         Instruction("user", InstructionLevel.USER, "user"),
         Instruction("workspace", InstructionLevel.WORKSPACE, "root", str(tmp_path)),
-        Instruction("other", InstructionLevel.DIRECTORY, "other", str(tmp_path / "other")),
+        Instruction(
+            "other", InstructionLevel.DIRECTORY, "other", str(tmp_path / "other")
+        ),
         Instruction("nested", InstructionLevel.DIRECTORY, "src", str(nested)),
     ]
-    assert [item.content for item in resolve_instructions(instructions, nested / "a.py")] == [
+    assert [
+        item.content for item in resolve_instructions(instructions, nested / "a.py")
+    ] == [
         "user",
         "workspace",
         "nested",
