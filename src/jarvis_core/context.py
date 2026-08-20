@@ -122,6 +122,7 @@ def _protocol_groups(messages: list[dict[str, Any]]) -> list[list[dict[str, Any]
         groups.append(group)
     return groups
 
+
 def compact_messages(
     messages: list[dict[str, Any]],
     *,
