@@ -22,7 +22,12 @@ class BenchmarkObservation:
     def utility(self) -> float:
         latency = 1 / (1 + max(0.0, self.latency_ms) / 10_000)
         efficiency = 1 / (1 + (self.input_tokens + self.output_tokens) / 100_000)
-        return 0.55 * self.quality + 0.25 * self.tool_success + 0.1 * latency + 0.1 * efficiency
+        return (
+            0.55 * self.quality
+            + 0.25 * self.tool_success
+            + 0.1 * latency
+            + 0.1 * efficiency
+        )
 
 
 @dataclass
