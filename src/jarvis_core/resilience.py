@@ -72,7 +72,8 @@ class ProviderPool(Generic[T]):
             for provider in self.providers
             if self.health.setdefault(
                 self.name(provider), ProviderHealth(self.name(provider))
-            ).state is not CircuitState.OPEN
+            ).state
+            is not CircuitState.OPEN
         ]
         return sorted(
             available,
