@@ -8,14 +8,15 @@ import json
 from pathlib import Path
 from typing import Any, Iterable
 
-
 _SECRET_KEYS = {"api_key", "authorization", "cookie", "password", "secret", "token"}
 
 
 def redact(value: Any) -> Any:
     if isinstance(value, dict):
         return {
-            str(key): ("[REDACTED]" if str(key).casefold() in _SECRET_KEYS else redact(item))
+            str(key): (
+                "[REDACTED]" if str(key).casefold() in _SECRET_KEYS else redact(item)
+            )
             for key, item in value.items()
         }
     if isinstance(value, list):
@@ -50,7 +51,9 @@ class TraceRecorder:
         target = Path(path)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(
-            "".join(json.dumps(event.to_dict(), default=str) + "\n" for event in self.events),
+            "".join(
+                json.dumps(event.to_dict(), default=str) + "\n" for event in self.events
+            ),
             encoding="utf-8",
         )
 
@@ -71,7 +74,5 @@ class TraceRecorder:
     def replay(self, kinds: Iterable[str] | None = None) -> list[TraceEvent]:
         allowed = set(kinds) if kinds is not None else None
         return [
-            event
-            for event in self.events
-            if allowed is None or event.kind in allowed
+            event for event in self.events if allowed is None or event.kind in allowed
         ]
