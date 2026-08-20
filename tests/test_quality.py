@@ -34,9 +34,7 @@ def test_role_router_prefers_quality_and_model_diversity():
         ("implementer", "verifier"),
         (
             RouteCandidate("fast", "qwen", "openai", 0.7, 0.9, 0.9, 0.1, 0.1),
-            RouteCandidate(
-                "strong", "claude", "anthropic", 0.95, 0.9, 0.95, 0.3, 0.4
-            ),
+            RouteCandidate("strong", "claude", "anthropic", 0.95, 0.9, 0.95, 0.3, 0.4),
         ),
     )
     assert routes[0].model == "claude"
@@ -48,10 +46,13 @@ def test_evidence_gate_rejects_unproved_or_failed_claims():
         CompletionRequirement("changed auth", (ProofKind.MUTATION,)),
         CompletionRequirement("tests pass", (ProofKind.TEST,)),
     )
-    audit = EvidenceGate().audit(requirements, (
-        ClaimProof("changed auth", ProofKind.MUTATION, "ledger:1"),
-        ClaimProof("tests pass", ProofKind.TEST, "pytest", verified=False),
-    ))
+    audit = EvidenceGate().audit(
+        requirements,
+        (
+            ClaimProof("changed auth", ProofKind.MUTATION, "ledger:1"),
+            ClaimProof("tests pass", ProofKind.TEST, "pytest", verified=False),
+        ),
+    )
     assert not audit.passed
     assert audit.rejected == ("tests pass",)
 

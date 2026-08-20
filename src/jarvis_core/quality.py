@@ -32,10 +32,15 @@ class TaskAnalysis:
 
     @property
     def needs_multi_agent(self) -> bool:
-        return self.complexity >= 0.55 or self.risk >= 0.45 or self.scope in {
-            Scope.MULTI_MODULE,
-            Scope.REPOSITORY,
-        }
+        return (
+            self.complexity >= 0.55
+            or self.risk >= 0.45
+            or self.scope
+            in {
+                Scope.MULTI_MODULE,
+                Scope.REPOSITORY,
+            }
+        )
 
     @classmethod
     def from_mapping(cls, value: dict[str, Any]) -> "TaskAnalysis":
