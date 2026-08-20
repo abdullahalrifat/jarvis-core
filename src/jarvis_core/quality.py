@@ -167,7 +167,9 @@ class EvidenceGate:
                 for item in matches
             ):
                 rejected.append(requirement.claim)
-        return CompletionAudit(not missing and not rejected, tuple(missing), tuple(rejected))
+        return CompletionAudit(
+            not missing and not rejected, tuple(missing), tuple(rejected)
+        )
 
 
 @dataclass(frozen=True)
@@ -221,8 +223,13 @@ class QualityMetrics:
     def summary(self) -> dict[str, float]:
         count = len(self.task_success)
         if not count:
-            return {"runs": 0.0, "success_rate": 0.0, "avg_latency_ms": 0.0,
-                    "avg_tokens": 0.0, "avg_tool_failures": 0.0}
+            return {
+                "runs": 0.0,
+                "success_rate": 0.0,
+                "avg_latency_ms": 0.0,
+                "avg_tokens": 0.0,
+                "avg_tool_failures": 0.0,
+            }
         return {
             "runs": float(count),
             "success_rate": sum(self.task_success) / count,
