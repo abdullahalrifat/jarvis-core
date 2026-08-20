@@ -9,6 +9,12 @@ description = "Shared token-efficient runtime for Jarvis agents"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Typing :: Typed",
+]
 
 [project.urls]
 Homepage = "https://github.com/abdullahalrifat/jarvis-core"
@@ -17,6 +23,9 @@ Issues = "https://github.com/abdullahalrifat/jarvis-core/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+jarvis_core = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
