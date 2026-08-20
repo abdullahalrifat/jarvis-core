@@ -5,20 +5,34 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "jarvis-agent-core"
 version = "0.2.0"
-description = "Shared token-efficient runtime for Jarvis agents"
+description = "Provider-neutral, token-efficient runtime contracts for Jarvis agents"
 readme = "README.md"
 requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Abdullah Al Rifat"},
+]
+keywords = ["ai", "agent", "llm", "orchestration", "tool-calling"]
 dependencies = []
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Typing :: Typed",
 ]
 
 [project.urls]
 Homepage = "https://github.com/abdullahalrifat/jarvis-core"
+Documentation = "https://github.com/abdullahalrifat/jarvis-core#readme"
 Repository = "https://github.com/abdullahalrifat/jarvis-core"
+Changelog = "https://github.com/abdullahalrifat/jarvis-core/blob/main/CHANGELOG.md"
 Issues = "https://github.com/abdullahalrifat/jarvis-core/issues"
 
 [tool.setuptools.packages.find]

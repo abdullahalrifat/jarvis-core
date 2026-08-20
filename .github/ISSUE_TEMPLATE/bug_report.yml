@@ -1,0 +1,42 @@
+name: Bug report
+description: Report a reproducible Jarvis Core defect
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for helping improve Jarvis Core. Never include secrets or private trace data.
+  - type: input
+    id: version
+    attributes:
+      label: Jarvis Core version
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python and operating system
+      placeholder: "Python 3.12 on Ubuntu 24.04"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: Provide the smallest safe code or steps that reproduce the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Redact credentials, private prompts, paths, and trace content.
+      render: shell
