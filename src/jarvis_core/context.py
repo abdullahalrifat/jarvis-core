@@ -160,14 +160,14 @@ def compact_messages(
             if any(
                 word in lowered for word in ("error", "failed", "exception", "blocked")
             ):
-                state["failures"].append(_window(content, 500))
+                state["failures"].append(_window(content, 160))
             else:
-                state["observations"].append(_window(content, 500))
+                state["observations"].append(_window(content, 160))
             if any(
                 word in lowered
                 for word in ("decided", "decision", "must", "constraint")
             ):
-                state["decisions"].append(_window(content, 500))
+                state["decisions"].append(_window(content, 160))
             for token in content.replace('"', " ").replace("'", " ").split():
                 cleaned = token.strip(".,:;()[]{}")
                 if cleaned.startswith("artifact://sha256/"):
@@ -178,9 +178,9 @@ def compact_messages(
         ("tools", 20),
         ("files", 40),
         ("artifacts", 40),
-        ("decisions", 12),
-        ("observations", 12),
-        ("failures", 12),
+        ("decisions", 8),
+        ("observations", 6),
+        ("failures", 6),
     ):
         state[key] = list(dict.fromkeys(state[key]))[-limit:]
     serialized = _window(json.dumps(state, ensure_ascii=False), max_summary_chars)
