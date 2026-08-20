@@ -61,7 +61,9 @@ class CapabilityRegistry:
             if profile is None or not profile.enabled:
                 raise LookupError(f"model profile is unavailable: {preferred}")
             if not profile.capabilities.supports(required):
-                raise LookupError(f"model profile lacks required capabilities: {preferred}")
+                raise LookupError(
+                    f"model profile lacks required capabilities: {preferred}"
+                )
             return profile
         candidates = [
             profile
