@@ -13,7 +13,12 @@ from .artifacts import (
     FileArtifactStore,
     MemoryArtifactStore,
 )
+from .capabilities import CapabilityRegistry, ModelCapabilities, ModelProfile
 from .context import compact_messages, delta_context, summarize_tool_result
+from .evals import EvalCase, EvalResult, run_evals, score_output
+from .recovery import FailureKind, RecoveryDecision, classify_failure
+from .search import SearchResult, citation_context, normalize_search_results
+from .tracing import TraceEvent, TraceRecorder, redact
 from .evidence import (
     Evidence,
     EvidenceLedger,
@@ -25,6 +30,22 @@ from .prompts import PromptRegistry, PromptTemplate, default_prompt_registry
 from .tokens import BudgetExceeded, TokenBudget, TokenLedger, TokenReservation, Usage
 
 __all__ = [
+    "CapabilityRegistry",
+    "ModelCapabilities",
+    "ModelProfile",
+    "EvalCase",
+    "EvalResult",
+    "FailureKind",
+    "RecoveryDecision",
+    "SearchResult",
+    "TraceEvent",
+    "TraceRecorder",
+    "citation_context",
+    "classify_failure",
+    "normalize_search_results",
+    "redact",
+    "run_evals",
+    "score_output",
     "AgentBackend",
     "AgentResult",
     "Artifact",
