@@ -72,3 +72,50 @@ __all__ = [
     "delta_context",
     "summarize_tool_result",
 ]
+
+from .benchmarks import BenchmarkObservation, BenchmarkRegistry
+from .policy import (
+    AttachmentDescriptor,
+    Instruction,
+    InstructionLevel,
+    MCPServerConfig,
+    MemoryRecord,
+    ToolPermission,
+    resolve_instructions,
+)
+from .resilience import (
+    CircuitState,
+    IdempotencyLedger,
+    ProviderHealth,
+    ProviderPool,
+)
+from .review import ChangeTransaction, ReviewHunk, ReviewState
+from .verification import (
+    ClaimAssessment,
+    SourceAssessment,
+    SourceKind,
+    rank_sources,
+)
+
+__all__ += [
+    "AttachmentDescriptor",
+    "BenchmarkObservation",
+    "BenchmarkRegistry",
+    "ChangeTransaction",
+    "CircuitState",
+    "ClaimAssessment",
+    "IdempotencyLedger",
+    "Instruction",
+    "InstructionLevel",
+    "MCPServerConfig",
+    "MemoryRecord",
+    "ProviderHealth",
+    "ProviderPool",
+    "ReviewHunk",
+    "ReviewState",
+    "SourceAssessment",
+    "SourceKind",
+    "ToolPermission",
+    "rank_sources",
+    "resolve_instructions",
+]
