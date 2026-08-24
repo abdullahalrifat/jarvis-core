@@ -84,12 +84,20 @@ class RetryDecision:
 
 def retry_policy(signature: FailureSignature) -> RetryDecision:
     if signature.attempts >= 3:
-        return RetryDecision("escalate", False, True, reason="repeated failure budget exhausted")
+        return RetryDecision(
+            "escalate", False, True, reason="repeated failure budget exhausted"
+        )
     if signature.kind is FailureClass.RATE_LIMIT:
-        return RetryDecision("fallback_or_backoff", True, backoff_seconds=2 ** signature.attempts)
+        return RetryDecision(
+            "fallback_or_backoff", True, backoff_seconds=2**signature.attempts
+        )
     if signature.kind is FailureClass.TOOL_PROTOCOL:
         return RetryDecision("repair_message", True)
-    if signature.kind in {FailureClass.SYNTAX, FailureClass.TEST, FailureClass.WRONG_SYMBOL}:
+    if signature.kind in {
+        FailureClass.SYNTAX,
+        FailureClass.TEST,
+        FailureClass.WRONG_SYMBOL,
+    }:
         return RetryDecision("inspect_and_repair", True)
     if signature.kind in {FailureClass.PERMISSION, FailureClass.API_COMPAT}:
         return RetryDecision("escalate", False, True)
@@ -131,7 +139,9 @@ class ContextItem:
     digest: str = ""
 
     @classmethod
-    def build(cls, kind: str, key: str, content: str, relevance: float = 0.0) -> "ContextItem":
+    def build(
+        cls, kind: str, key: str, content: str, relevance: float = 0.0
+    ) -> "ContextItem":
         compact = content.strip()
         return cls(
             kind=kind,
@@ -151,7 +161,10 @@ class CompiledContext:
     omitted: int
 
     def render(self) -> str:
-        blocks = [f"[{item.kind}:{item.key} sha256={item.digest[:12]}]\n{item.content}" for item in self.items]
+        blocks = [
+            f"[{item.kind}:{item.key} sha256={item.digest[:12]}]\n{item.content}"
+            for item in self.items
+        ]
         return "\n\n".join(blocks)
 
 
@@ -162,7 +175,9 @@ def compile_context(items: Iterable[ContextItem], token_budget: int) -> Compiled
         current = deduped.get(item.digest)
         if current is None or item.relevance > current.relevance:
             deduped[item.digest] = item
-    ranked = sorted(deduped.values(), key=lambda item: (item.relevance, -item.tokens), reverse=True)
+    ranked = sorted(
+        deduped.values(), key=lambda item: (item.relevance, -item.tokens), reverse=True
+    )
     selected: list[ContextItem] = []
     used = 0
     for item in ranked:
@@ -181,11 +196,17 @@ class SpeculationPolicy:
     reason: str = ""
 
 
-def speculation_policy(*, complexity: float, uncertainty: float, risk: float, token_pressure: float) -> SpeculationPolicy:
+def speculation_policy(
+    *, complexity: float, uncertainty: float, risk: float, token_pressure: float
+) -> SpeculationPolicy:
     score = 0.45 * complexity + 0.35 * uncertainty + 0.20 * risk
     if token_pressure >= 0.85 or score < 0.48:
         return SpeculationPolicy(False, 1, reason="single path is more efficient")
-    return SpeculationPolicy(True, 3 if score >= 0.78 and token_pressure < 0.55 else 2, reason="uncertainty justifies bounded parallel candidates")
+    return SpeculationPolicy(
+        True,
+        3 if score >= 0.78 and token_pressure < 0.55 else 2,
+        reason="uncertainty justifies bounded parallel candidates",
+    )
 
 
 @dataclass(frozen=True)
@@ -212,8 +233,18 @@ def escalation_policy(
     if score < 0.42:
         return EscalationDecision("cheap", False, False, "low measured task difficulty")
     if score < 0.72:
-        return EscalationDecision("strong", risk >= 0.55, False, "strong single agent with selective verification")
-    return EscalationDecision("expert", True, risk >= 0.75 or tool_failures >= 2, "complex/risky task requires independent escalation")
+        return EscalationDecision(
+            "strong",
+            risk >= 0.55,
+            False,
+            "strong single agent with selective verification",
+        )
+    return EscalationDecision(
+        "expert",
+        True,
+        risk >= 0.75 or tool_failures >= 2,
+        "complex/risky task requires independent escalation",
+    )
 
 
 @dataclass(frozen=True)
@@ -238,11 +269,21 @@ def evidence_confidence(
 ) -> EvidenceConfidence:
     tests = tests_passed / max(1, tests_passed + tests_failed)
     requirements = requirements_verified / max(1, requirements_total)
-    verifier = 1.0 if verifier_passed is True else 0.5 if verifier_passed is None else 0.0
+    verifier = (
+        1.0 if verifier_passed is True else 0.5 if verifier_passed is None else 0.0
+    )
     diagnostics = 1.0 / (1.0 + max(0, unresolved_diagnostics))
     assumptions = 1.0 / (1.0 + max(0, unverified_assumptions))
-    score = 0.30 * tests + 0.30 * requirements + 0.20 * verifier + 0.12 * diagnostics + 0.08 * assumptions
-    return EvidenceConfidence(score, tests, requirements, verifier, diagnostics, assumptions)
+    score = (
+        0.30 * tests
+        + 0.30 * requirements
+        + 0.20 * verifier
+        + 0.12 * diagnostics
+        + 0.08 * assumptions
+    )
+    return EvidenceConfidence(
+        score, tests, requirements, verifier, diagnostics, assumptions
+    )
 
 
 @dataclass(frozen=True)
@@ -273,7 +314,13 @@ class ImpactGraph:
 
     def tests_for(self, changed: Iterable[str]) -> tuple[str, ...]:
         impacted = self.impacted(changed)
-        return tuple(sorted(key for key in impacted if self.nodes.get(key) and self.nodes[key].kind == "test"))
+        return tuple(
+            sorted(
+                key
+                for key in impacted
+                if self.nodes.get(key) and self.nodes[key].kind == "test"
+            )
+        )
 
 
 @dataclass(frozen=True)
@@ -304,7 +351,11 @@ class FailureMemory:
         self.save()
 
     def relevant(self, category: str, limit: int = 10) -> list[FailureMemoryRecord]:
-        rows = [item for item in self.records.values() if item.task_category in {category, "*"}]
+        rows = [
+            item
+            for item in self.records.values()
+            if item.task_category in {category, "*"}
+        ]
         return sorted(rows, key=lambda item: item.count, reverse=True)[:limit]
 
     def save(self) -> None:
@@ -322,8 +373,20 @@ class FailureMemory:
         payload = json.loads(self.path.read_text(encoding="utf-8"))
         for row in payload:
             sig = row["signature"]
-            signature = FailureSignature(FailureClass(sig["kind"]), sig["fingerprint"], sig.get("detail", ""), sig.get("tool"), sig.get("model"), sig.get("attempts", 1))
-            record = FailureMemoryRecord(signature, row["task_category"], row.get("successful_recovery"), row.get("count", 1))
+            signature = FailureSignature(
+                FailureClass(sig["kind"]),
+                sig["fingerprint"],
+                sig.get("detail", ""),
+                sig.get("tool"),
+                sig.get("model"),
+                sig.get("attempts", 1),
+            )
+            record = FailureMemoryRecord(
+                signature,
+                row["task_category"],
+                row.get("successful_recovery"),
+                row.get("count", 1),
+            )
             self.records[signature.fingerprint] = record
 
 
@@ -347,7 +410,9 @@ def compress_tool_result(content: str, *, max_chars: int = 6000) -> ToolArtifact
     return ToolArtifact(digest, summary, content)
 
 
-def minimize_patch_paths(changed_paths: Sequence[str], required_paths: Iterable[str]) -> tuple[str, ...]:
+def minimize_patch_paths(
+    changed_paths: Sequence[str], required_paths: Iterable[str]
+) -> tuple[str, ...]:
     required = set(required_paths)
     return tuple(path for path in changed_paths if path in required)
 
@@ -361,4 +426,12 @@ class VerifierEnvelope:
 
     def to_prompt(self) -> str:
         # Intentionally excludes implementer chain-of-thought, plans, and narrative.
-        return json.dumps({"task": self.task, "diff": self.diff, "evidence": list(self.evidence), "tests": self.tests}, ensure_ascii=False)
+        return json.dumps(
+            {
+                "task": self.task,
+                "diff": self.diff,
+                "evidence": list(self.evidence),
+                "tests": self.tests,
+            },
+            ensure_ascii=False,
+        )
