@@ -70,9 +70,7 @@ _ALLOWED_TRANSITIONS: dict[ExecutionState, frozenset[ExecutionState]] = {
     ExecutionState.LEASE_LOST: frozenset(
         {ExecutionState.RETRYING, ExecutionState.FAILED}
     ),
-    ExecutionState.RETRYING: frozenset(
-        {ExecutionState.QUEUED, ExecutionState.FAILED}
-    ),
+    ExecutionState.RETRYING: frozenset({ExecutionState.QUEUED, ExecutionState.FAILED}),
     ExecutionState.COMPLETED: frozenset(),
     ExecutionState.CANCELLED: frozenset(),
     ExecutionState.FAILED: frozenset(),
@@ -86,7 +84,9 @@ def can_transition(current: str | ExecutionState, target: str | ExecutionState) 
     return ExecutionState(target) in _ALLOWED_TRANSITIONS[ExecutionState(current)]
 
 
-def require_transition(current: str | ExecutionState, target: str | ExecutionState) -> None:
+def require_transition(
+    current: str | ExecutionState, target: str | ExecutionState
+) -> None:
     if not can_transition(current, target):
         raise ValueError(f"invalid execution transition: {current} -> {target}")
 
@@ -317,10 +317,9 @@ def next_cron(
     *,
     limit_minutes: int = 60 * 24 * 366 * 2,
 ) -> datetime:
-    candidate = (
-        after.astimezone(timezone.utc).replace(second=0, microsecond=0)
-        + timedelta(minutes=1)
-    )
+    candidate = after.astimezone(timezone.utc).replace(
+        second=0, microsecond=0
+    ) + timedelta(minutes=1)
     for _ in range(limit_minutes):
         if cron_matches(expression, candidate):
             return candidate
