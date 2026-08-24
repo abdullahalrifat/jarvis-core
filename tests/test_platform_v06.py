@@ -51,8 +51,7 @@ def test_calibrator_prefers_measured_reliability(tmp_path: Path):
     )
     assert calibrator.select(["fast", "safe"], "code") == "safe"
     assert (
-        RouteCalibrator(path, min_samples=1).select(["fast", "safe"], "code")
-        == "safe"
+        RouteCalibrator(path, min_samples=1).select(["fast", "safe"], "code") == "safe"
     )
 
 
