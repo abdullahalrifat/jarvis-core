@@ -23,7 +23,11 @@ from jarvis_core import (
 def test_context_compiler_deduplicates_and_respects_budget():
     duplicate = ContextItem.build("file", "a.py", "important symbol", 0.9)
     context = compile_context(
-        [duplicate, ContextItem.build("file", "copy.py", "important symbol", 0.4), ContextItem.build("git", "history", "recent change", 0.8)],
+        [
+            duplicate,
+            ContextItem.build("file", "copy.py", "important symbol", 0.4),
+            ContextItem.build("git", "history", "recent change", 0.8),
+        ],
         256,
     )
     assert len(context.items) == 2
@@ -32,9 +36,13 @@ def test_context_compiler_deduplicates_and_respects_budget():
 
 
 def test_speculation_and_escalation_are_bounded():
-    simple = speculation_policy(complexity=0.2, uncertainty=0.1, risk=0.1, token_pressure=0.2)
+    simple = speculation_policy(
+        complexity=0.2, uncertainty=0.1, risk=0.1, token_pressure=0.2
+    )
     assert not simple.enabled and simple.candidates == 1
-    complex_policy = speculation_policy(complexity=0.9, uncertainty=0.9, risk=0.5, token_pressure=0.2)
+    complex_policy = speculation_policy(
+        complexity=0.9, uncertainty=0.9, risk=0.5, token_pressure=0.2
+    )
     assert complex_policy.enabled and complex_policy.candidates in {2, 3}
     escalation = escalation_policy(
         complexity=0.9,
@@ -97,7 +105,9 @@ def test_impact_graph_selects_transitive_tests():
 
 
 def test_patch_plan_and_verifier_envelope_are_narrative_free():
-    plan = PatchPlan("fix auth", (PatchTarget("auth.py", ("login",), tests=("test_auth.py",)),))
+    plan = PatchPlan(
+        "fix auth", (PatchTarget("auth.py", ("login",), tests=("test_auth.py",)),)
+    )
     assert plan.permits("auth.py", "login")
     assert not plan.permits("payments.py")
     prompt = VerifierEnvelope(
