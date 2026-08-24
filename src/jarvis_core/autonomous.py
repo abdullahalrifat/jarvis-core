@@ -29,25 +29,61 @@ class ExecutionState(str, Enum):
 
 _ALLOWED_TRANSITIONS: dict[ExecutionState, frozenset[ExecutionState]] = {
     ExecutionState.QUEUED: frozenset({ExecutionState.LEASED, ExecutionState.CANCELLED}),
-    ExecutionState.LEASED: frozenset({ExecutionState.PREPARING, ExecutionState.LEASE_LOST, ExecutionState.CANCEL_REQUESTED}),
-    ExecutionState.PREPARING: frozenset({ExecutionState.RUNNING, ExecutionState.FAILED, ExecutionState.LEASE_LOST, ExecutionState.CANCEL_REQUESTED}),
-    ExecutionState.RUNNING: frozenset({ExecutionState.VERIFYING, ExecutionState.FAILED, ExecutionState.LEASE_LOST, ExecutionState.CANCEL_REQUESTED, ExecutionState.TIMED_OUT}),
-    ExecutionState.VERIFYING: frozenset({ExecutionState.UPLOADING, ExecutionState.FAILED, ExecutionState.LEASE_LOST, ExecutionState.CANCEL_REQUESTED}),
-    ExecutionState.UPLOADING: frozenset({ExecutionState.COMPLETED, ExecutionState.FAILED, ExecutionState.LEASE_LOST}),
-    ExecutionState.CANCEL_REQUESTED: frozenset({ExecutionState.CANCELLED, ExecutionState.FAILED}),
-    ExecutionState.LEASE_LOST: frozenset({ExecutionState.RETRYING, ExecutionState.FAILED}),
-    ExecutionState.RETRYING: frozenset({ExecutionState.QUEUED, ExecutionState.FAILED}),
+    ExecutionState.LEASED: frozenset(
+        {
+            ExecutionState.PREPARING,
+            ExecutionState.LEASE_LOST,
+            ExecutionState.CANCEL_REQUESTED,
+        }
+    ),
+    ExecutionState.PREPARING: frozenset(
+        {
+            ExecutionState.RUNNING,
+            ExecutionState.FAILED,
+            ExecutionState.LEASE_LOST,
+            ExecutionState.CANCEL_REQUESTED,
+        }
+    ),
+    ExecutionState.RUNNING: frozenset(
+        {
+            ExecutionState.VERIFYING,
+            ExecutionState.FAILED,
+            ExecutionState.LEASE_LOST,
+            ExecutionState.CANCEL_REQUESTED,
+            ExecutionState.TIMED_OUT,
+        }
+    ),
+    ExecutionState.VERIFYING: frozenset(
+        {
+            ExecutionState.UPLOADING,
+            ExecutionState.FAILED,
+            ExecutionState.LEASE_LOST,
+            ExecutionState.CANCEL_REQUESTED,
+        }
+    ),
+    ExecutionState.UPLOADING: frozenset(
+        {ExecutionState.COMPLETED, ExecutionState.FAILED, ExecutionState.LEASE_LOST}
+    ),
+    ExecutionState.CANCEL_REQUESTED: frozenset(
+        {ExecutionState.CANCELLED, ExecutionState.FAILED}
+    ),
+    ExecutionState.LEASE_LOST: frozenset(
+        {ExecutionState.RETRYING, ExecutionState.FAILED}
+    ),
+    ExecutionState.RETRYING: frozenset(
+        {ExecutionState.QUEUED, ExecutionState.FAILED}
+    ),
     ExecutionState.COMPLETED: frozenset(),
     ExecutionState.CANCELLED: frozenset(),
     ExecutionState.FAILED: frozenset(),
-    ExecutionState.TIMED_OUT: frozenset({ExecutionState.RETRYING, ExecutionState.FAILED}),
+    ExecutionState.TIMED_OUT: frozenset(
+        {ExecutionState.RETRYING, ExecutionState.FAILED}
+    ),
 }
 
 
 def can_transition(current: str | ExecutionState, target: str | ExecutionState) -> bool:
-    source = ExecutionState(current)
-    destination = ExecutionState(target)
-    return destination in _ALLOWED_TRANSITIONS[source]
+    return ExecutionState(target) in _ALLOWED_TRANSITIONS[ExecutionState(current)]
 
 
 def require_transition(current: str | ExecutionState, target: str | ExecutionState) -> None:
@@ -64,13 +100,16 @@ class LeaseToken:
     expires_at: datetime
 
     @classmethod
-    def issue(cls, task_id: str, worker_id: str, attempt: int, lease_seconds: int) -> "LeaseToken":
+    def issue(
+        cls, task_id: str, worker_id: str, attempt: int, lease_seconds: int
+    ) -> "LeaseToken":
         return cls(
             task_id=task_id,
             worker_id=worker_id,
             lease_id=secrets.token_urlsafe(24),
             attempt=max(1, attempt),
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=max(1, lease_seconds)),
+            expires_at=datetime.now(timezone.utc)
+            + timedelta(seconds=max(1, lease_seconds)),
         )
 
     def expired(self, now: datetime | None = None) -> bool:
@@ -99,8 +138,18 @@ class ProofRecord:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def build(cls, kind: ProofKind, subject: str, status: str, detail: str = "", **metadata: Any) -> "ProofRecord":
-        digest = hashlib.sha256(f"{kind.value}|{subject}|{status}|{detail}|{json.dumps(metadata, sort_keys=True, default=str)}".encode()).hexdigest()
+    def build(
+        cls,
+        kind: ProofKind,
+        subject: str,
+        status: str,
+        detail: str = "",
+        **metadata: Any,
+    ) -> "ProofRecord":
+        payload = json.dumps(metadata, sort_keys=True, default=str)
+        digest = hashlib.sha256(
+            f"{kind.value}|{subject}|{status}|{detail}|{payload}".encode()
+        ).hexdigest()
         return cls(kind, subject, status, detail[:8000], digest, dict(metadata))
 
 
@@ -113,14 +162,29 @@ class ExecutionProofLedger:
             self.records.append(record)
         return record
 
-    def record(self, kind: ProofKind, subject: str, status: str, detail: str = "", **metadata: Any) -> ProofRecord:
+    def record(
+        self,
+        kind: ProofKind,
+        subject: str,
+        status: str,
+        detail: str = "",
+        **metadata: Any,
+    ) -> ProofRecord:
         return self.add(ProofRecord.build(kind, subject, status, detail, **metadata))
 
     def successful_tests(self) -> int:
-        return sum(1 for item in self.records if item.kind is ProofKind.TEST and item.status == "passed")
+        return sum(
+            1
+            for item in self.records
+            if item.kind is ProofKind.TEST and item.status == "passed"
+        )
 
     def failed_tests(self) -> int:
-        return sum(1 for item in self.records if item.kind is ProofKind.TEST and item.status == "failed")
+        return sum(
+            1
+            for item in self.records
+            if item.kind is ProofKind.TEST and item.status == "failed"
+        )
 
     def verifier_passed(self) -> bool | None:
         rows = [item for item in self.records if item.kind is ProofKind.VERIFIER]
@@ -129,7 +193,11 @@ class ExecutionProofLedger:
         return all(item.status == "passed" for item in rows)
 
     def to_dict(self) -> dict[str, Any]:
-        return {"records": [{**asdict(item), "kind": item.kind.value} for item in self.records]}
+        return {
+            "records": [
+                {**asdict(item), "kind": item.kind.value} for item in self.records
+            ]
+        }
 
 
 class PermissionAction(str, Enum):
@@ -152,18 +220,45 @@ class PermissionDecision:
     reason: str
 
 
-def permission_decision(capability: str, rules: Iterable[PermissionRule], *, plan_mode: bool = False, mutation: bool = False) -> PermissionDecision:
+def permission_decision(
+    capability: str,
+    rules: Iterable[PermissionRule],
+    *,
+    plan_mode: bool = False,
+    mutation: bool = False,
+) -> PermissionDecision:
     if plan_mode and mutation:
-        return PermissionDecision(capability, PermissionAction.DENY, "plan mode is technically read-only")
+        return PermissionDecision(
+            capability, PermissionAction.DENY, "plan mode is technically read-only"
+        )
     for rule in rules:
         if rule.capability == capability or rule.capability == "*":
-            return PermissionDecision(capability, rule.action, f"matched {rule.capability} ({rule.risk})")
+            return PermissionDecision(
+                capability,
+                rule.action,
+                f"matched {rule.capability} ({rule.risk})",
+            )
     if mutation:
-        return PermissionDecision(capability, PermissionAction.ASK, "mutation requires explicit approval by default")
-    return PermissionDecision(capability, PermissionAction.ALLOW, "read-only capability allowed by default")
+        return PermissionDecision(
+            capability,
+            PermissionAction.ASK,
+            "mutation requires explicit approval by default",
+        )
+    return PermissionDecision(
+        capability,
+        PermissionAction.ALLOW,
+        "read-only capability allowed by default",
+    )
 
 
-def _field_values(expression: str, minimum: int, maximum: int, *, sunday_7: bool = False) -> set[int]:
+def _field_values(
+    expression: str,
+    minimum: int,
+    maximum: int,
+    *,
+    sunday_7: bool = False,
+) -> set[int]:
+    raw_maximum = 7 if sunday_7 else maximum
     values: set[int] = set()
     for raw in expression.split(","):
         part = raw.strip()
@@ -177,17 +272,16 @@ def _field_values(expression: str, minimum: int, maximum: int, *, sunday_7: bool
             if step <= 0:
                 raise ValueError("cron step must be positive")
         if base == "*":
-            start, end = minimum, maximum
+            start, end = minimum, raw_maximum
         elif "-" in base:
             start, end = (int(item) for item in base.split("-", 1))
         else:
             start = end = int(base)
-        if sunday_7:
-            start = 0 if start == 7 else start
-            end = 0 if end == 7 and start == end else end
-        if start > end or start < minimum or end > maximum:
+        if start > end or start < minimum or end > raw_maximum:
             raise ValueError("cron value/range outside field bounds")
         values.update(range(start, end + 1, step))
+    if sunday_7:
+        values = {0 if item == 7 else item for item in values}
     return values
 
 
@@ -205,8 +299,7 @@ def cron_matches(expression: str, value: datetime) -> bool:
     if dt.month not in _field_values(month, 1, 12):
         return False
     dom_match = dt.day in _field_values(dom, 1, 31)
-    dow_values = _field_values(dow.replace("7", "0"), 0, 6)
-    dow_match = weekday in dow_values
+    dow_match = weekday in _field_values(dow, 0, 6, sunday_7=True)
     dom_wild = dom == "*"
     dow_wild = dow == "*"
     if dom_wild and dow_wild:
@@ -218,8 +311,16 @@ def cron_matches(expression: str, value: datetime) -> bool:
     return dom_match or dow_match
 
 
-def next_cron(expression: str, after: datetime, *, limit_minutes: int = 60 * 24 * 366 * 2) -> datetime:
-    candidate = after.astimezone(timezone.utc).replace(second=0, microsecond=0) + timedelta(minutes=1)
+def next_cron(
+    expression: str,
+    after: datetime,
+    *,
+    limit_minutes: int = 60 * 24 * 366 * 2,
+) -> datetime:
+    candidate = (
+        after.astimezone(timezone.utc).replace(second=0, microsecond=0)
+        + timedelta(minutes=1)
+    )
     for _ in range(limit_minutes):
         if cron_matches(expression, candidate):
             return candidate
