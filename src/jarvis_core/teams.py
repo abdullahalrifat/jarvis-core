@@ -78,7 +78,14 @@ class TeamBoard:
     def ready(self) -> list[TeamTask]:
         return [task for task in self.list() if task.status == TaskStatus.READY]
 
-    def claim(self, task_id: str, owner: str, *, worktree: str | None = None, branch: str | None = None) -> TeamTask:
+    def claim(
+        self,
+        task_id: str,
+        owner: str,
+        *,
+        worktree: str | None = None,
+        branch: str | None = None,
+    ) -> TeamTask:
         with self._lock:
             task = self.get(task_id)
             if task.status != TaskStatus.READY:
@@ -90,7 +97,13 @@ class TeamBoard:
             task.updated_at = time()
             return task
 
-    def complete(self, task_id: str, *, artifacts: tuple[str, ...] = (), evidence: tuple[dict[str, Any], ...] = ()) -> TeamTask:
+    def complete(
+        self,
+        task_id: str,
+        *,
+        artifacts: tuple[str, ...] = (),
+        evidence: tuple[dict[str, Any], ...] = (),
+    ) -> TeamTask:
         with self._lock:
             task = self.get(task_id)
             if task.status != TaskStatus.RUNNING:
@@ -121,10 +134,17 @@ class TeamBoard:
 
     def _refresh_locked(self) -> None:
         for task in self._tasks.values():
-            if task.status not in {TaskStatus.PENDING, TaskStatus.READY, TaskStatus.BLOCKED}:
+            if task.status not in {
+                TaskStatus.PENDING,
+                TaskStatus.READY,
+                TaskStatus.BLOCKED,
+            }:
                 continue
             deps = [self._tasks[dep].status for dep in task.dependencies]
-            if any(status in {TaskStatus.FAILED, TaskStatus.CANCELLED} for status in deps):
+            if any(
+                status in {TaskStatus.FAILED, TaskStatus.CANCELLED}
+                for status in deps
+            ):
                 task.status = TaskStatus.BLOCKED
             elif all(status == TaskStatus.COMPLETED for status in deps):
                 task.status = TaskStatus.READY
@@ -136,5 +156,8 @@ class TeamBoard:
         tasks = self.list()
         return {
             "tasks": [task.to_dict() for task in tasks],
-            "counts": {status.value: sum(task.status == status for task in tasks) for status in TaskStatus},
+            "counts": {
+                status.value: sum(task.status == status for task in tasks)
+                for status in TaskStatus
+            },
         }
