@@ -1,0 +1,28 @@
+name: Audit v0.8 release
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Download and verify published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/core-v080
+          gh release download v0.8.0 --repo abdullahalrifat/jarvis-core --dir /tmp/core-v080
+          ls -la /tmp/core-v080
+          sha256sum /tmp/core-v080/jarvis_agent_core-0.8.0-py3-none-any.whl
+          python -m pip install /tmp/core-v080/jarvis_agent_core-0.8.0-py3-none-any.whl
+          python -c "import importlib.metadata as m; assert m.version('jarvis-agent-core') == '0.8.0'"
+          if [ -f /tmp/core-v080/SHA256SUMS ]; then
+            cd /tmp/core-v080 && sha256sum -c SHA256SUMS
+          fi
