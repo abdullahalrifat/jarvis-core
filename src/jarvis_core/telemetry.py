@@ -48,7 +48,12 @@ class SpanRecord:
 class Telemetry:
     """Small tracing facade that emits JSONL and optionally native OTel spans."""
 
-    def __init__(self, *, service_name: str = "jarvis", jsonl_path: str | Path | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        service_name: str = "jarvis",
+        jsonl_path: str | Path | None = None,
+    ) -> None:
         self.service_name = service_name
         self.jsonl_path = Path(jsonl_path).expanduser() if jsonl_path else None
         self.records: list[SpanRecord] = []
@@ -61,7 +66,14 @@ class Telemetry:
             self._otel_tracer = None
 
     @contextmanager
-    def span(self, name: str, *, trace_id: str | None = None, parent_span_id: str | None = None, **attributes: Any) -> Iterator[SpanRecord]:
+    def span(
+        self,
+        name: str,
+        *,
+        trace_id: str | None = None,
+        parent_span_id: str | None = None,
+        **attributes: Any,
+    ) -> Iterator[SpanRecord]:
         record = SpanRecord(
             name=name,
             trace_id=trace_id or uuid.uuid4().hex,
@@ -71,7 +83,11 @@ class Telemetry:
             attributes={"service.name": self.service_name, **attributes},
         )
         started = perf_counter()
-        otel_cm = self._otel_tracer.start_as_current_span(name) if self._otel_tracer else None
+        otel_cm = (
+            self._otel_tracer.start_as_current_span(name)
+            if self._otel_tracer
+            else None
+        )
         native = otel_cm.__enter__() if otel_cm else None
         if native is not None:
             for key, value in record.attributes.items():
@@ -107,7 +123,9 @@ class Telemetry:
             return
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record.to_dict(), ensure_ascii=False, default=str) + "\n")
+            handle.write(
+                json.dumps(record.to_dict(), ensure_ascii=False, default=str) + "\n"
+            )
 
     def summary(self) -> dict[str, Any]:
         durations = [item.duration_ms or 0.0 for item in self.records]
