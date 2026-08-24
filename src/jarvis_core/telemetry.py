@@ -84,9 +84,7 @@ class Telemetry:
         )
         started = perf_counter()
         otel_cm = (
-            self._otel_tracer.start_as_current_span(name)
-            if self._otel_tracer
-            else None
+            self._otel_tracer.start_as_current_span(name) if self._otel_tracer else None
         )
         native = otel_cm.__enter__() if otel_cm else None
         if native is not None:
