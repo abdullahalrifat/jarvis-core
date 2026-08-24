@@ -38,13 +38,22 @@ def test_calibrator_prefers_measured_reliability(tmp_path: Path):
     calibrator.extend(
         [
             RouteObservation("fast", "code", True, 100, input_tokens=1000),
-            RouteObservation("fast", "code", False, 100, incorrect_completion=True),
+            RouteObservation(
+                "fast",
+                "code",
+                False,
+                100,
+                incorrect_completion=True,
+            ),
             RouteObservation("safe", "code", True, 500, input_tokens=3000),
             RouteObservation("safe", "code", True, 500, input_tokens=3000),
         ]
     )
     assert calibrator.select(["fast", "safe"], "code") == "safe"
-    assert RouteCalibrator(path, min_samples=1).select(["fast", "safe"], "code") == "safe"
+    assert (
+        RouteCalibrator(path, min_samples=1).select(["fast", "safe"], "code")
+        == "safe"
+    )
 
 
 def test_schedule_requires_exactly_one_timing_mode():
