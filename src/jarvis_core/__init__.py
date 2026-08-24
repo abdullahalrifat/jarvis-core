@@ -138,6 +138,16 @@ from .verification import (
     SourceKind,
     rank_sources,
 )
+from .teams import TaskStatus, TeamBoard, TeamTask
+from .telemetry import SpanRecord, Telemetry
+from .calibration import RouteCalibrator, RouteObservation, RouteScore
+from .platform import (
+    BackgroundJob,
+    JobStatus,
+    PluginManifest,
+    RemoteRunSpec,
+    ScheduleSpec,
+)
 
 __all__ += [
     "AttachmentDescriptor",
@@ -160,4 +170,17 @@ __all__ += [
     "ToolPermission",
     "rank_sources",
     "resolve_instructions",
+    "TaskStatus",
+    "TeamBoard",
+    "TeamTask",
+    "SpanRecord",
+    "Telemetry",
+    "RouteCalibrator",
+    "RouteObservation",
+    "RouteScore",
+    "BackgroundJob",
+    "JobStatus",
+    "PluginManifest",
+    "RemoteRunSpec",
+    "ScheduleSpec",
 ]
