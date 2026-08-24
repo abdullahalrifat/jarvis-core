@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0 (unreleased)
+
+- Add task execution policy contracts for selective speculation, failure-driven escalation, verifier isolation, evidence confidence, impact-aware verification, retry ceilings, and patch minimization.
+- Add deterministic task-policy scoring so runtime decisions can be tested independently of model output.
+- Extend efficiency/reliability regression coverage for cheap/simple paths, high-risk escalation, speculation pressure, evidence confidence, and repeated-failure stop conditions.
+
 ## 0.6.0 (unreleased)
 
 - Add shared agent-team task/status/board contracts for dependency-aware parallel work.
