@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.0 (unreleased)
+
+- Add autonomous execution-state contracts and validated transition rules for leased, running, verifying, uploading, cancellation, retry, timeout, and terminal states.
+- Add attempt-scoped lease/fencing-token contracts for distributed workers.
+- Add execution proof-ledger records for tests, commands, patches, sources, verification, approvals, and routing.
+- Add deterministic permission-policy decisions with technically enforced read-only plan behavior.
+- Add shared standard cron matching/next-run semantics, including lists/ranges/steps, Sunday 0/7, and normal day-of-month/day-of-week OR behavior.
+
 ## 0.7.0 (unreleased)
 
 - Add task execution policy contracts for selective speculation, failure-driven escalation, verifier isolation, evidence confidence, impact-aware verification, retry ceilings, and patch minimization.
@@ -35,7 +43,6 @@
 - Add structured evidence, verification verdicts, and versioned role prompts.
 - Add selective multi-agent orchestration contracts.
 - Add capability-aware model routing and deterministic recovery decisions.
-- Add normalized citation-safe search evidence.
-- Add redacted trace/replay primitives and dependency-free evaluation runners.
-- Add typed package metadata.
+- Add normalized citation-safe search evidence and dependency-free evaluation runners.
+- Add redacted trace/replay primitives and typed package metadata.
 - Remove legacy compatibility contracts.
