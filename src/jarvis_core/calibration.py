@@ -41,9 +41,7 @@ class RouteScore:
 class RouteCalibrator:
     """Persistent empirical router; never trusts model self-reported quality."""
 
-    def __init__(
-        self, path: str | Path | None = None, *, min_samples: int = 3
-    ) -> None:
+    def __init__(self, path: str | Path | None = None, *, min_samples: int = 3) -> None:
         self.path = Path(path).expanduser() if path else None
         self.min_samples = max(1, min_samples)
         self.observations: list[RouteObservation] = []
