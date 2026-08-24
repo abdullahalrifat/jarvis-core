@@ -15,6 +15,10 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install -e . -r requirements-dev.txt build twine
+      - name: Print published v0.7 wheel checksum for downstream immutable pins
+        run: |
+          curl -fsSL https://github.com/abdullahalrifat/jarvis-core/releases/download/v0.7.0/jarvis_agent_core-0.7.0-py3-none-any.whl -o /tmp/jarvis-core.whl
+          sha256sum /tmp/jarvis-core.whl
       - run: black --check src tests
       - run: ruff check src tests --select E9,F63,F7,F82
       - run: pytest -q --cov=jarvis_core --cov-report=term-missing --cov-fail-under=85
