@@ -232,3 +232,35 @@ __all__ += [
     "retry_policy",
     "speculation_policy",
 ]
+
+from .autonomous import (
+    ExecutionProofLedger,
+    ExecutionState,
+    LeaseToken,
+    PermissionAction,
+    PermissionDecision,
+    PermissionRule,
+    ProofKind as AutonomousProofKind,
+    ProofRecord,
+    can_transition,
+    cron_matches,
+    next_cron,
+    permission_decision,
+    require_transition,
+)
+
+__all__ += [
+    "ExecutionProofLedger",
+    "ExecutionState",
+    "LeaseToken",
+    "PermissionAction",
+    "PermissionDecision",
+    "PermissionRule",
+    "AutonomousProofKind",
+    "ProofRecord",
+    "can_transition",
+    "cron_matches",
+    "next_cron",
+    "permission_decision",
+    "require_transition",
+]
