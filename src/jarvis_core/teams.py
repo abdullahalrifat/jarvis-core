@@ -142,8 +142,7 @@ class TeamBoard:
                 continue
             deps = [self._tasks[dep].status for dep in task.dependencies]
             if any(
-                status in {TaskStatus.FAILED, TaskStatus.CANCELLED}
-                for status in deps
+                status in {TaskStatus.FAILED, TaskStatus.CANCELLED} for status in deps
             ):
                 task.status = TaskStatus.BLOCKED
             elif all(status == TaskStatus.COMPLETED for status in deps):
