@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from time import monotonic
-from typing import Callable, Generic, Iterable, TypeVar
+from typing import Callable, Generic, TypeVar
 
 T = TypeVar("T")
 

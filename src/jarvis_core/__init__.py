@@ -36,6 +36,25 @@ from .tokens import (
     Usage,
     estimate_tokens,
 )
+from .autonomous import (
+    ExecutionProof,
+    ExecutionProofLedger,
+    ExecutionState,
+    LeaseToken,
+    PermissionAction,
+    PermissionDecision,
+    PermissionRule,
+    ProofKind as AutonomousProofKind,
+    ProofRecord,
+    PROOF_SCHEMA_VERSION,
+    VerificationRecord,
+    can_transition,
+    cron_matches,
+    next_cron,
+    permission_decision,
+    require_transition,
+)
+
 from .quality import (
     AdaptivePlan,
     ClaimProof,
@@ -232,25 +251,6 @@ __all__ += [
     "retry_policy",
     "speculation_policy",
 ]
-
-from .autonomous import (
-    ExecutionProof,
-    ExecutionProofLedger,
-    ExecutionState,
-    LeaseToken,
-    PermissionAction,
-    PermissionDecision,
-    PermissionRule,
-    ProofKind as AutonomousProofKind,
-    ProofRecord,
-    PROOF_SCHEMA_VERSION,
-    VerificationRecord,
-    can_transition,
-    cron_matches,
-    next_cron,
-    permission_decision,
-    require_transition,
-)
 
 __all__ += [
     "ExecutionProof",

@@ -46,7 +46,7 @@ def to_openai_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 for block in content
                 if isinstance(block, dict) and block.get("type") == "tool_use"
             ]
-            message = {"role": "assistant", "content": text or None}
+            message: dict[str, Any] = {"role": "assistant", "content": text or None}
             if calls:
                 message["tool_calls"] = calls
             converted.append(message)
