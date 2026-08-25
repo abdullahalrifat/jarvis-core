@@ -39,6 +39,7 @@ jobs:
         run: |
           black --check src tests
           ruff check src tests --select E9,F63,F7,F82
+          mypy src
           pytest -q --cov=jarvis_core --cov-report=term-missing --cov-fail-under=85
       - name: Record validated SHA
         id: validated
