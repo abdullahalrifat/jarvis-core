@@ -7,7 +7,7 @@ impact analysis, failure memory, evidence confidence, patch minimization, and ro
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from enum import Enum
 import hashlib
 import json

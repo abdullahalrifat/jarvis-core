@@ -29,7 +29,11 @@ class Evidence:
             raise ValueError("start_line must be positive")
         if self.end_line is not None and self.start_line is None:
             raise ValueError("end_line requires start_line")
-        if self.end_line is not None and self.end_line < self.start_line:
+        if (
+            self.end_line is not None
+            and self.start_line is not None
+            and self.end_line < self.start_line
+        ):
             raise ValueError("end_line must not precede start_line")
 
     def to_dict(self) -> dict[str, object]:

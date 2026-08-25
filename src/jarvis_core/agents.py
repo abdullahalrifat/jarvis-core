@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from .evidence import Evidence, EvidenceLedger, VerificationVerdict
 from .tokens import TokenLedger
@@ -94,16 +94,19 @@ class SelectiveOrchestrator:
                 max_output_tokens=max_output_tokens,
             )
         else:
-            result = self.ledger.call(
-                agent=role,
-                model=self.backend.model,
-                prompt={"role": role, "task": task, "context": context},
-                max_output_tokens=max_output_tokens,
-                invoke=lambda: self.backend.run(
-                    role=role,
-                    task=task,
-                    context=context,
+            result = cast(
+                AgentResult,
+                self.ledger.call(
+                    agent=role,
+                    model=self.backend.model,
+                    prompt={"role": role, "task": task, "context": context},
                     max_output_tokens=max_output_tokens,
+                    invoke=lambda: self.backend.run(
+                        role=role,
+                        task=task,
+                        context=context,
+                        max_output_tokens=max_output_tokens,
+                    ),
                 ),
             )
         if not isinstance(result, AgentResult):

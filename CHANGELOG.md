@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.2
+
+- Fix optional evidence line handling so autonomous execution does not compare `None` with integers.
+- Tighten public typing across autonomous execution, messaging and telemetry contracts.
+- Enforce `mypy` in pull-request and exact-release validation.
+
 ## 0.9.1
 
 - Gate release publication on formatting, lint, tests, coverage and package validation for the exact release commit.

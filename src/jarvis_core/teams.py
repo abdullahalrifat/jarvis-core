@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from threading import RLock
@@ -75,7 +76,7 @@ class TeamBoard:
             self._refresh_locked()
             return sorted(self._tasks.values(), key=lambda item: item.created_at)
 
-    def ready(self) -> list[TeamTask]:
+    def ready(self) -> builtins.list[TeamTask]:
         return [task for task in self.list() if task.status == TaskStatus.READY]
 
     def claim(
