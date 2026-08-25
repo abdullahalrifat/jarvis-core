@@ -8,7 +8,7 @@ from enum import Enum
 import hashlib
 import json
 import secrets
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 
 class ExecutionState(str, Enum):
@@ -198,6 +198,141 @@ class ExecutionProofLedger:
                 {**asdict(item), "kind": item.kind.value} for item in self.records
             ]
         }
+
+
+PROOF_SCHEMA_VERSION = 1
+_HEX_DIGEST_LENGTH = 64
+
+
+def _require_digest(value: str, field_name: str) -> None:
+    if len(value) != _HEX_DIGEST_LENGTH:
+        raise ValueError(f"{field_name} must be a SHA-256 hex digest")
+    try:
+        int(value, 16)
+    except ValueError as exc:
+        raise ValueError(f"{field_name} must be a SHA-256 hex digest") from exc
+
+
+@dataclass(frozen=True)
+class VerificationRecord:
+    """One reproducible verification command and its bound output digest."""
+
+    command: str
+    status: str
+    exit_code: int
+    output_digest: str
+
+    def validate(self) -> None:
+        if not self.command.strip():
+            raise ValueError("verification command is required")
+        if self.status not in {"passed", "failed", "blocked"}:
+            raise ValueError("verification status must be passed, failed, or blocked")
+        if self.status == "passed" and self.exit_code != 0:
+            raise ValueError("a passed verification must have exit_code 0")
+        _require_digest(self.output_digest, "verification output_digest")
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "VerificationRecord":
+        record = cls(
+            command=str(value.get("command") or ""),
+            status=str(value.get("status") or ""),
+            exit_code=int(value.get("exit_code", -1)),
+            output_digest=str(value.get("output_digest") or ""),
+        )
+        record.validate()
+        return record
+
+
+@dataclass(frozen=True)
+class ExecutionProof:
+    """Versioned proof envelope fenced to one cloud execution attempt."""
+
+    task_id: str
+    lease_id: str
+    attempt: int
+    workspace_digest: str
+    route: str
+    model: str
+    mutation_digest: str
+    verifications: tuple[VerificationRecord, ...]
+    artifact_hashes: dict[str, str] = field(default_factory=dict)
+    schema_version: int = PROOF_SCHEMA_VERSION
+
+    def validate(self, *, task_id: str | None = None, lease_id: str | None = None,
+                 require_verified: bool = True) -> None:
+        if self.schema_version != PROOF_SCHEMA_VERSION:
+            raise ValueError(f"unsupported proof schema_version: {self.schema_version}")
+        for name, value in (("task_id", self.task_id), ("lease_id", self.lease_id),
+                            ("route", self.route), ("model", self.model)):
+            if not value.strip():
+                raise ValueError(f"proof {name} is required")
+        if task_id is not None and self.task_id != task_id:
+            raise ValueError("proof task_id does not match the completed task")
+        if lease_id is not None and self.lease_id != lease_id:
+            raise ValueError("proof lease_id does not match the active lease")
+        if self.attempt < 1:
+            raise ValueError("proof attempt must be positive")
+        _require_digest(self.workspace_digest, "workspace_digest")
+        _require_digest(self.mutation_digest, "mutation_digest")
+        for record in self.verifications:
+            record.validate()
+        for name, digest in self.artifact_hashes.items():
+            if not name.strip():
+                raise ValueError("artifact hash names cannot be empty")
+            _require_digest(digest, f"artifact {name}")
+        if require_verified and (
+            not self.verifications
+            or any(item.status != "passed" for item in self.verifications)
+        ):
+            raise ValueError("successful completion requires passing verifications")
+
+    def to_dict(self) -> dict[str, Any]:
+        self.validate(require_verified=False)
+        return {
+            "schema_version": self.schema_version, "task_id": self.task_id,
+            "lease_id": self.lease_id, "attempt": self.attempt,
+            "workspace_digest": self.workspace_digest, "route": self.route,
+            "model": self.model, "mutation_digest": self.mutation_digest,
+            "verifications": [asdict(item) for item in self.verifications],
+            "artifact_hashes": dict(sorted(self.artifact_hashes.items())),
+        }
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any], *, task_id: str | None = None,
+                  lease_id: str | None = None,
+                  require_verified: bool = True) -> "ExecutionProof":
+        if not isinstance(value, Mapping):
+            raise ValueError("execution proof must be an object")
+        raw_verifications = value.get("verifications")
+        if not isinstance(raw_verifications, list):
+            raise ValueError("proof verifications must be a list")
+        raw_artifacts = value.get("artifact_hashes", {})
+        if not isinstance(raw_artifacts, Mapping):
+            raise ValueError("proof artifact_hashes must be an object")
+        proof = cls(
+            schema_version=int(value.get("schema_version", 0)),
+            task_id=str(value.get("task_id") or ""),
+            lease_id=str(value.get("lease_id") or ""),
+            attempt=int(value.get("attempt", 0)),
+            workspace_digest=str(value.get("workspace_digest") or ""),
+            route=str(value.get("route") or ""),
+            model=str(value.get("model") or ""),
+            mutation_digest=str(value.get("mutation_digest") or ""),
+            verifications=tuple(
+                VerificationRecord.from_dict(item)
+                for item in raw_verifications if isinstance(item, Mapping)
+            ),
+            artifact_hashes={str(k): str(v) for k, v in raw_artifacts.items()},
+        )
+        if len(proof.verifications) != len(raw_verifications):
+            raise ValueError("every verification entry must be an object")
+        proof.validate(task_id=task_id, lease_id=lease_id,
+                       require_verified=require_verified)
+        return proof
+
+    def digest(self) -> str:
+        payload = json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(payload.encode()).hexdigest()
 
 
 class PermissionAction(str, Enum):

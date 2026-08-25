@@ -234,6 +234,7 @@ __all__ += [
 ]
 
 from .autonomous import (
+    ExecutionProof,
     ExecutionProofLedger,
     ExecutionState,
     LeaseToken,
@@ -242,6 +243,8 @@ from .autonomous import (
     PermissionRule,
     ProofKind as AutonomousProofKind,
     ProofRecord,
+    PROOF_SCHEMA_VERSION,
+    VerificationRecord,
     can_transition,
     cron_matches,
     next_cron,
@@ -250,6 +253,7 @@ from .autonomous import (
 )
 
 __all__ += [
+    "ExecutionProof",
     "ExecutionProofLedger",
     "ExecutionState",
     "LeaseToken",
@@ -258,6 +262,8 @@ __all__ += [
     "PermissionRule",
     "AutonomousProofKind",
     "ProofRecord",
+    "PROOF_SCHEMA_VERSION",
+    "VerificationRecord",
     "can_transition",
     "cron_matches",
     "next_cron",

@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import pytest
 
 from jarvis_core.autonomous import (
+    ExecutionProof,
     ExecutionProofLedger,
     ExecutionState,
     LeaseToken,
@@ -13,6 +14,7 @@ from jarvis_core.autonomous import (
     cron_matches,
     next_cron,
     permission_decision,
+    VerificationRecord,
     require_transition,
 )
 
@@ -64,3 +66,61 @@ def test_cron_supports_sunday_seven_and_next_run():
     assert cron_matches("0 8 * * 7", sunday)
     after = datetime(2026, 1, 4, 7, 59, tzinfo=timezone.utc)
     assert next_cron("0 8 * * 7", after) == sunday
+
+
+
+def test_execution_proof_is_fenced_and_digest_is_stable():
+    digest = "a" * 64
+    proof = ExecutionProof(
+        task_id="task-1",
+        lease_id="lease-1",
+        attempt=2,
+        workspace_digest=digest,
+        route="coding",
+        model="test-model",
+        mutation_digest="b" * 64,
+        verifications=(VerificationRecord("pytest -q", "passed", 0, "c" * 64),),
+        artifact_hashes={"patch.diff": "d" * 64},
+    )
+    payload = proof.to_dict()
+    parsed = ExecutionProof.from_dict(
+        payload, task_id="task-1", lease_id="lease-1"
+    )
+    assert parsed.digest() == proof.digest()
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        {"task_id": "other"},
+        {"lease_id": "other"},
+        {"schema_version": 999},
+        {"verifications": []},
+    ],
+)
+def test_execution_proof_rejects_unfenced_or_unverified_payload(mutation):
+    digest = "a" * 64
+    payload = {
+        "schema_version": 1,
+        "task_id": "task-1",
+        "lease_id": "lease-1",
+        "attempt": 1,
+        "workspace_digest": digest,
+        "route": "coding",
+        "model": "test-model",
+        "mutation_digest": "b" * 64,
+        "verifications": [
+            {
+                "command": "pytest -q",
+                "status": "passed",
+                "exit_code": 0,
+                "output_digest": "c" * 64,
+            }
+        ],
+        "artifact_hashes": {},
+    }
+    payload.update(mutation)
+    with pytest.raises(ValueError):
+        ExecutionProof.from_dict(
+            payload, task_id="task-1", lease_id="lease-1"
+        )
