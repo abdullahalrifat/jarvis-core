@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.1
+
+- Gate release publication on formatting, lint, tests, coverage and package validation for the exact release commit.
+- Verify the built wheel in a clean environment before publication.
+- Bind uploaded artifacts, attestations and the GitHub release tag to the same validated commit SHA.
+- Supersede the unvalidated v0.9.0 build without mutating its published assets.
+
 ## 0.9.0
 
 - Add a versioned execution-proof envelope shared by independent agent clients
