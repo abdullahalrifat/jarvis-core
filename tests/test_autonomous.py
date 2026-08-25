@@ -68,7 +68,6 @@ def test_cron_supports_sunday_seven_and_next_run():
     assert next_cron("0 8 * * 7", after) == sunday
 
 
-
 def test_execution_proof_is_fenced_and_digest_is_stable():
     digest = "a" * 64
     proof = ExecutionProof(
@@ -83,9 +82,7 @@ def test_execution_proof_is_fenced_and_digest_is_stable():
         artifact_hashes={"patch.diff": "d" * 64},
     )
     payload = proof.to_dict()
-    parsed = ExecutionProof.from_dict(
-        payload, task_id="task-1", lease_id="lease-1"
-    )
+    parsed = ExecutionProof.from_dict(payload, task_id="task-1", lease_id="lease-1")
     assert parsed.digest() == proof.digest()
 
 
@@ -121,6 +118,4 @@ def test_execution_proof_rejects_unfenced_or_unverified_payload(mutation):
     }
     payload.update(mutation)
     with pytest.raises(ValueError):
-        ExecutionProof.from_dict(
-            payload, task_id="task-1", lease_id="lease-1"
-        )
+        ExecutionProof.from_dict(payload, task_id="task-1", lease_id="lease-1")
