@@ -1,26 +1,43 @@
 # Changelog
 
-## 0.8.0 (unreleased)
+## Documentation after 0.8.0
 
-- Add autonomous execution-state contracts and validated transition rules for leased, running, verifying, uploading, cancellation, retry, timeout, and terminal states.
+- Document the contract-versus-enforcement boundary explicitly: Core permission, fencing, proof and policy types require end-to-end enforcement in Jarvis/Server.
+- Record the verified v0.8.0 wheel SHA-256 and coordinated release-order rule.
+- Clarify that consumer production maturity is not implied by the presence of Core contracts.
+
+No package version or v0.8.0 release asset is changed by these documentation updates.
+
+## 0.8.0
+
+- Add autonomous execution-state contracts and validated transition rules for leased, running, verifying, uploading, cancellation, retry, timeout and terminal states.
 - Add attempt-scoped lease/fencing-token contracts for distributed workers.
-- Add execution proof-ledger records for tests, commands, patches, sources, verification, approvals, and routing.
-- Add deterministic permission-policy decisions with technically enforced read-only plan behavior.
-- Add shared standard cron matching/next-run semantics, including lists/ranges/steps, Sunday 0/7, and normal day-of-month/day-of-week OR behavior.
+- Add execution proof-ledger records for tests, commands, patches, sources, verification, approvals and routing.
+- Add deterministic permission-policy decisions and plan-mode primitives.
+- Add shared standard cron matching/next-run semantics, including lists/ranges/steps, Sunday `0/7` and day-of-month/day-of-week OR behavior.
 
-## 0.7.0 (unreleased)
+Verified wheel SHA-256:
 
-- Add task execution policy contracts for selective speculation, failure-driven escalation, verifier isolation, evidence confidence, impact-aware verification, retry ceilings, and patch minimization.
+```text
+d9569b69385e58a681ea01e900eb81c395d3f202a09a92878eb82bf4d4b8618a
+```
+
+## 0.7.0
+
+- Add selective speculation, failure-driven escalation, verifier isolation, evidence confidence, impact-aware verification, retry ceilings and patch-minimization contracts.
 - Add deterministic task-policy scoring so runtime decisions can be tested independently of model output.
-- Extend efficiency/reliability regression coverage for cheap/simple paths, high-risk escalation, speculation pressure, evidence confidence, and repeated-failure stop conditions.
+- Extend efficiency/reliability regression coverage for simple paths, high-risk escalation, speculation pressure, evidence confidence and repeated-failure stop conditions.
 
-## 0.6.0 (unreleased)
+## 0.6.0
 
 - Add shared agent-team task/status/board contracts for dependency-aware parallel work.
 - Add durable job, schedule, plugin-manifest and remote/cloud-run contracts shared by CLI and Server.
-- Add route observations and empirical calibration that penalize incorrect completion, latency, token use and tool failures.
+- Add route observations/calibration penalizing incorrect completion, latency, token use and tool failures.
 - Add OpenTelemetry-compatible span records with dependency-free JSONL fallback.
-- Add focused v0.6 contract tests for dependency progression, failure blocking, calibration persistence, schedules and telemetry.
+
+## 0.5.0
+
+- Extend repository/developer-intelligence contracts used by the v0.5 consumer line while preserving Core's runtime-neutral boundary.
 
 ## 0.4.0
 
@@ -28,21 +45,15 @@
 
 ## 0.3.0
 
-- Add provider health scoring, circuit breakers, ordered fallback, and retry-safe operation idempotency.
-- Add claim-to-source assessment, primary-source ranking, contradiction detection, freshness, diversity, confidence, and consensus scoring.
+- Add provider health scoring, circuit breakers, ordered fallback and retry-safe operation idempotency.
+- Add claim/source assessment, primary-source ranking, contradiction/freshness/diversity/confidence scoring.
 - Add benchmark observations and task-specific calibrated model selection.
-- Add per-hunk transactional review and reversible change-ledger contracts.
-- Add hierarchical instruction resolution, expiring memory, MCP transport/tool policy, and multimodal attachment-budget contracts.
+- Add per-hunk transactional review/reversible change-ledger contracts.
+- Add hierarchical instruction resolution, expiring memory, MCP transport/tool policy and multimodal attachment budgets.
 
 ## 0.2.0
 
-- Add strict token reservations and provider usage accounting.
-- Add provider-neutral compaction with untrusted-state boundaries.
-- Preserve OpenAI and Anthropic tool exchanges during compaction.
-- Add content-addressed memory and file artifact stores with bounded retrieval.
-- Add structured evidence, verification verdicts, and versioned role prompts.
-- Add selective multi-agent orchestration contracts.
-- Add capability-aware model routing and deterministic recovery decisions.
-- Add normalized citation-safe search evidence and dependency-free evaluation runners.
-- Add redacted trace/replay primitives and typed package metadata.
-- Remove legacy compatibility contracts.
+- Add strict token reservations/provider usage accounting.
+- Add provider-neutral compaction with untrusted-state boundaries and preserved OpenAI/Anthropic tool exchanges.
+- Add content-addressed memory/file artifact stores with bounded retrieval.
+- Add structured evidence, verification verdicts, versioned role prompts, selective multi-agent contracts, capability routing, recovery, citation-safe search evidence, evaluation runners and redacted trace/replay primitives.
