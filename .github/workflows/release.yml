@@ -19,21 +19,30 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Build and validate
+  validate-and-build:
+    name: Validate and build exact release SHA
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
       release_needed: ${{ steps.release.outputs.needed }}
+      validated_sha: ${{ steps.validated.outputs.sha }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install build dependencies
-        run: python -m pip install --upgrade build twine
+      - name: Install validation and build dependencies
+        run: python -m pip install -e . -r requirements-dev.txt build twine
+      - name: Validate source
+        run: |
+          black --check src tests
+          ruff check src tests --select E9,F63,F7,F82
+          pytest -q --cov=jarvis_core --cov-report=term-missing --cov-fail-under=85
+      - name: Record validated SHA
+        id: validated
+        run: echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
       - name: Read and validate package version
         id: version
         shell: bash
@@ -65,21 +74,29 @@ jobs:
       - name: Validate distributions
         if: steps.release.outputs.needed == 'true'
         run: python -m twine check dist/*
+      - name: Verify wheel in a clean environment
+        if: steps.release.outputs.needed == 'true'
+        shell: bash
+        run: |
+          python -m venv /tmp/jarvis-core-release
+          /tmp/jarvis-core-release/bin/python -m pip install dist/*.whl
+          /tmp/jarvis-core-release/bin/python -c "import importlib.metadata as m; assert m.version('jarvis-agent-core') == '${{ steps.version.outputs.version }}'"
+          /tmp/jarvis-core-release/bin/python -c "from jarvis_core import ExecutionProof, VerificationRecord; assert ExecutionProof and VerificationRecord"
       - name: Create checksums
         if: steps.release.outputs.needed == 'true'
         run: cd dist && sha256sum * > SHA256SUMS
       - uses: actions/upload-artifact@v4
         if: steps.release.outputs.needed == 'true'
         with:
-          name: python-package-distributions
+          name: python-package-distributions-${{ github.sha }}
           path: dist/
           if-no-files-found: error
           retention-days: 30
 
   github-release:
-    name: Publish GitHub release
-    needs: build
-    if: needs.build.outputs.release_needed == 'true'
+    name: Publish validated GitHub release
+    needs: validate-and-build
+    if: needs.validate-and-build.outputs.release_needed == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -88,17 +105,22 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: python-package-distributions
+          name: python-package-distributions-${{ needs.validate-and-build.outputs.validated_sha }}
           path: dist/
+      - name: Refuse a mismatched release SHA
+        env:
+          VALIDATED_SHA: ${{ needs.validate-and-build.outputs.validated_sha }}
+        run: test "$GITHUB_SHA" = "$VALIDATED_SHA"
       - name: Attest distributions
         uses: actions/attest-build-provenance@v3
         with:
           subject-path: "dist/*"
-      - name: Create release if version is new
+      - name: Create release from the validated SHA
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ needs.build.outputs.tag }}
-          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+          RELEASE_TAG: ${{ needs.validate-and-build.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.validate-and-build.outputs.version }}
+          VALIDATED_SHA: ${{ needs.validate-and-build.outputs.validated_sha }}
         shell: bash
         run: |
           if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
@@ -107,13 +129,13 @@ jobs:
           fi
           gh release create "$RELEASE_TAG" dist/* \
             --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
+            --target "$VALIDATED_SHA" \
             --title "Jarvis Core $RELEASE_VERSION" \
             --generate-notes
 
   publish-pypi:
     name: Optionally publish to PyPI
-    needs: [build, github-release]
+    needs: [validate-and-build, github-release]
     if: ${{ vars.PUBLISH_PYPI == 'true' || inputs.publish_pypi == true }}
     runs-on: ubuntu-latest
     environment:
@@ -124,7 +146,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: python-package-distributions
+          name: python-package-distributions-${{ needs.validate-and-build.outputs.validated_sha }}
           path: dist/
       - name: Remove non-package checksum file
         run: rm dist/SHA256SUMS
