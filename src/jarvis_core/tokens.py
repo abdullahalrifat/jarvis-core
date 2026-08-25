@@ -124,7 +124,7 @@ class TokenLedger:
     ) -> Usage:
         """Commit actual usage and release unused reserved capacity."""
         with self._lock:
-            held = self._reservations.pop(reservation.id, None)
+            held = self._reservations.get(reservation.id)
             if held is None:
                 raise ValueError("unknown or already closed reservation")
             actual = usage or Usage(
@@ -134,9 +134,14 @@ class TokenLedger:
             )
             if actual.agent != held.agent:
                 raise ValueError("usage agent does not match reservation")
-            # The reservation is now removed, so validate the complete actual usage.
-            # This also catches providers that report more than the estimate.
-            self._validate(actual.agent, actual.input_tokens, actual.output_tokens)
+            # Exclude this hold while validating the complete actual usage. Keep it
+            # open if validation fails so callers can inspect or refund it.
+            del self._reservations[reservation.id]
+            try:
+                self._validate(actual.agent, actual.input_tokens, actual.output_tokens)
+            except BaseException:
+                self._reservations[reservation.id] = held
+                raise
             self.entries.append(actual)
             return actual
 
@@ -180,18 +185,21 @@ class TokenLedger:
         reservation = self.reserve(agent, input_tokens, max_output_tokens)
         try:
             response = invoke()
+            provider_usage = extract_usage(response) if extract_usage else None
+            usage = self.usage_from_provider(agent, model, provider_usage) or Usage(
+                agent=agent,
+                model=model,
+                input_tokens=input_tokens,
+                output_tokens=estimate_tokens(response),
+            )
+            self.commit(reservation, usage)
+            return response
         except BaseException:
-            self.refund(reservation)
+            # Extraction or validation can fail after the provider returns. Never
+            # leave that failed call consuming reserved capacity.
+            with self._lock:
+                self._reservations.pop(reservation.id, None)
             raise
-        provider_usage = extract_usage(response) if extract_usage else None
-        usage = self.usage_from_provider(agent, model, provider_usage) or Usage(
-            agent=agent,
-            model=model,
-            input_tokens=input_tokens,
-            output_tokens=estimate_tokens(response),
-        )
-        self.commit(reservation, usage)
-        return response
 
     def to_dict(self) -> dict[str, object]:
         with self._lock:

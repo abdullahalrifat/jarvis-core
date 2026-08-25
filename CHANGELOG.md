@@ -1,5 +1,10 @@
 # Changelog
 
+## Fixes after 0.8.0
+
+- Make token reservation commits transactional when reported provider usage fails
+  validation, and release reservations when provider usage extraction fails.
+
 ## Documentation after 0.8.0
 
 - Document the contract-versus-enforcement boundary explicitly: Core permission, fencing, proof and policy types require end-to-end enforcement in Jarvis/Server.
