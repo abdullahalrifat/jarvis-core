@@ -258,12 +258,21 @@ class ExecutionProof:
     artifact_hashes: dict[str, str] = field(default_factory=dict)
     schema_version: int = PROOF_SCHEMA_VERSION
 
-    def validate(self, *, task_id: str | None = None, lease_id: str | None = None,
-                 require_verified: bool = True) -> None:
+    def validate(
+        self,
+        *,
+        task_id: str | None = None,
+        lease_id: str | None = None,
+        require_verified: bool = True,
+    ) -> None:
         if self.schema_version != PROOF_SCHEMA_VERSION:
             raise ValueError(f"unsupported proof schema_version: {self.schema_version}")
-        for name, value in (("task_id", self.task_id), ("lease_id", self.lease_id),
-                            ("route", self.route), ("model", self.model)):
+        for name, value in (
+            ("task_id", self.task_id),
+            ("lease_id", self.lease_id),
+            ("route", self.route),
+            ("model", self.model),
+        ):
             if not value.strip():
                 raise ValueError(f"proof {name} is required")
         if task_id is not None and self.task_id != task_id:
@@ -289,18 +298,27 @@ class ExecutionProof:
     def to_dict(self) -> dict[str, Any]:
         self.validate(require_verified=False)
         return {
-            "schema_version": self.schema_version, "task_id": self.task_id,
-            "lease_id": self.lease_id, "attempt": self.attempt,
-            "workspace_digest": self.workspace_digest, "route": self.route,
-            "model": self.model, "mutation_digest": self.mutation_digest,
+            "schema_version": self.schema_version,
+            "task_id": self.task_id,
+            "lease_id": self.lease_id,
+            "attempt": self.attempt,
+            "workspace_digest": self.workspace_digest,
+            "route": self.route,
+            "model": self.model,
+            "mutation_digest": self.mutation_digest,
             "verifications": [asdict(item) for item in self.verifications],
             "artifact_hashes": dict(sorted(self.artifact_hashes.items())),
         }
 
     @classmethod
-    def from_dict(cls, value: Mapping[str, Any], *, task_id: str | None = None,
-                  lease_id: str | None = None,
-                  require_verified: bool = True) -> "ExecutionProof":
+    def from_dict(
+        cls,
+        value: Mapping[str, Any],
+        *,
+        task_id: str | None = None,
+        lease_id: str | None = None,
+        require_verified: bool = True,
+    ) -> "ExecutionProof":
         if not isinstance(value, Mapping):
             raise ValueError("execution proof must be an object")
         raw_verifications = value.get("verifications")
@@ -320,14 +338,16 @@ class ExecutionProof:
             mutation_digest=str(value.get("mutation_digest") or ""),
             verifications=tuple(
                 VerificationRecord.from_dict(item)
-                for item in raw_verifications if isinstance(item, Mapping)
+                for item in raw_verifications
+                if isinstance(item, Mapping)
             ),
             artifact_hashes={str(k): str(v) for k, v in raw_artifacts.items()},
         )
         if len(proof.verifications) != len(raw_verifications):
             raise ValueError("every verification entry must be an object")
-        proof.validate(task_id=task_id, lease_id=lease_id,
-                       require_verified=require_verified)
+        proof.validate(
+            task_id=task_id, lease_id=lease_id, require_verified=require_verified
+        )
         return proof
 
     def digest(self) -> str:
