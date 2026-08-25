@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.0
+
+- Add a versioned execution-proof envelope shared by independent agent clients
+  and servers.
+- Fence completion proof to the exact task ID, lease ID and attempt.
+- Bind workspace, mutation, verification output and result artifacts with
+  SHA-256 digests.
+- Reject malformed proof versions, failed verification records and mismatched
+  execution identities.
+- Export `ExecutionProof`, `VerificationRecord` and
+  `PROOF_SCHEMA_VERSION` as public Core contracts.
+- Add regression coverage for deterministic proof serialization, digest
+  stability and stale/mismatched fence rejection.
+
 ## Fixes after 0.8.0
 
 - Make token reservation commits transactional when reported provider usage fails
