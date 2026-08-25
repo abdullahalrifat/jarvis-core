@@ -5,26 +5,22 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-`jarvis-agent-core` is the small, typed, dependency-free Python runtime shared
-by standalone [Jarvis](https://github.com/abdullahalrifat/jarvis) and
-[AI Stack Server](https://github.com/abdullahalrifat/ai-stack). It standardizes
-portable agent behavior without owning product-specific tools, storage,
-permissions, credentials, or deployment policy.
+`jarvis-agent-core` is the small typed dependency-free Python contract/runtime library shared by standalone [Jarvis](https://github.com/abdullahalrifat/jarvis) and [AI Stack Server](https://github.com/abdullahalrifat/ai-stack). It standardizes portable agent behavior without owning product-specific tools, storage, credentials, deployment policy or OS isolation.
 
-The project is public and MIT-licensed. You may use it in your own agent,
-automation, research, or developer-tool project.
+The project is public and MIT-licensed.
 
 ## Install
 
-Python 3.10 or newer is required. Until PyPI publication is available, install
-the signed release artifact:
+Python 3.10+ is required. The verified v0.8.0 release wheel is:
 
 ```bash
 python -m pip install \
-  "jarvis-agent-core @ https://github.com/abdullahalrifat/jarvis-core/releases/download/v0.2.0/jarvis_agent_core-0.2.0-py3-none-any.whl#sha256=285cddb3b5ce917d4acd406825bfd640e3bb3d1a5f66fec01580f4edbdb68bf6"
+  "jarvis-agent-core @ https://github.com/abdullahalrifat/jarvis-core/releases/download/v0.8.0/jarvis_agent_core-0.8.0-py3-none-any.whl#sha256=d9569b69385e58a681ea01e900eb81c395d3f202a09a92878eb82bf4d4b8618a"
 ```
 
-Or install a checkout for development:
+The wheel was independently downloaded, installed and checked against the release `SHA256SUMS` during the v0.8 post-merge audit.
+
+For development:
 
 ```bash
 git clone https://github.com/abdullahalrifat/jarvis-core.git
@@ -35,25 +31,39 @@ python -m pytest
 
 ## Capabilities
 
-Core provides:
+Core provides typed deterministic contracts/primitives for:
 
-- atomic token reservations, refunds, and provider usage accounting;
-- provider-neutral context compaction that preserves OpenAI and Anthropic
-  tool-call/result groups;
-- untrusted-state boundaries for repository, attachment, connector, and web
-  content;
-- content-addressed memory/file artifacts with bounded retrieval;
-- structured evidence ledgers and verification verdicts;
-- versioned role prompts and selective multi-agent orchestration contracts;
-- model capability profiles and deterministic selection;
-- failure classification and bounded recovery decisions;
-- normalized citation-aware search evidence;
-- redacted, replayable JSONL trace events;
-- dependency-free evaluation cases, scoring, and runners.
+- token budgets/reservations/refunds/provider usage accounting;
+- provider-neutral context compaction preserving OpenAI/Anthropic tool groups;
+- bounded content-addressed artifact references and retrieval;
+- evidence ledgers, verification verdicts and quality measurements;
+- model capability profiles, routing, calibration and benchmark observations;
+- failure classification, bounded recovery and resilience/provider health;
+- multi-agent roles/tasks/results and adaptive execution decisions;
+- hierarchical instructions, expiring memory and attachment descriptors;
+- persistent MCP server/tool permission vocabulary;
+- team/job/schedule/remote/platform contracts;
+- deterministic execution states/transitions;
+- attempt-scoped lease fencing tokens;
+- proof-ledger and permission-decision contracts;
+- conventional cron semantics including Sunday `0/7` and DOM/DOW OR behavior;
+- normalized citation-aware search evidence, redacted trace types and eval cases.
 
-Core deliberately does not access files, execute commands, call model
-endpoints, start MCP processes, persist product sessions, enforce tenancy, or
-approve changes. Consumers supply those backends and policies.
+Core deliberately does **not** access repositories, execute commands, call model endpoints, start MCP processes, persist product sessions, run cloud workers, enforce tenancy, implement OS sandboxes or approve changes. Jarvis/Server must wire contracts into the real execution path.
+
+See [docs/contract-boundaries.md](docs/contract-boundaries.md) for the enforcement and trust boundary.
+
+## Contract enforcement matters
+
+A Core field is not automatically a security control. Examples:
+
+- `ToolPermission.requires_approval` must be enforced by the consumer before dispatch;
+- cloud heartbeat/state/completion must include the current lease fence in durable database predicates;
+- permission decisions must wrap actual tool mutations;
+- proof should derive from successful tool/test execution rather than model claims;
+- provider credentials must stay outside portable task payloads.
+
+Consumer compatibility and end-to-end enforcement tests are therefore required in addition to Core unit tests.
 
 ## Library example
 
@@ -68,12 +78,17 @@ from jarvis_core import (
 )
 
 ledger = TokenLedger(TokenBudget(max_run_input=10_000, max_run_output=2_000))
-reservation = ledger.reserve("implementer", input_tokens=2_000, output_tokens=500)
-
-# Call your provider, then account for its reported usage.
+reservation = ledger.reserve(
+    "implementer", input_tokens=2_000, output_tokens=500
+)
 ledger.commit(
     reservation,
-    Usage(agent="implementer", model="my-model", input_tokens=650, output_tokens=180),
+    Usage(
+        agent="implementer",
+        model="my-model",
+        input_tokens=650,
+        output_tokens=180,
+    ),
 )
 
 registry = CapabilityRegistry()
@@ -88,29 +103,26 @@ registry.add(
 )
 ```
 
-The package exports typed contracts from `jarvis_core`. See
-[`src/jarvis_core/__init__.py`](src/jarvis_core/__init__.py) for the supported
-top-level import surface and the tests for executable examples.
+See [`src/jarvis_core/__init__.py`](src/jarvis_core/__init__.py) for the supported top-level import surface and tests for executable examples.
 
-## Compatibility policy
+## Compatibility and release policy
 
-- Versioning follows semantic versioning while the public API stabilizes.
-- Patch releases should remain compatible within the same minor line.
-- Deprecations are documented in [CHANGELOG.md](CHANGELOG.md).
-- Breaking contracts require a coordinated Core, Jarvis, and Server release.
-- Jarvis and Server must pin an exact verified release artifact or a compatible
-  published minor range.
+- semantic versioning is used while the pre-1.0 API stabilizes;
+- patch releases should remain compatible within a minor line;
+- deprecations are documented in [CHANGELOG.md](CHANGELOG.md);
+- breaking contracts require coordinated Core/Jarvis/Server releases;
+- publish Core first, then pin consumers to the immutable released artifact/checksum and execute consumer/cross-repository gates;
+- an existing GitHub Release is never silently replaced.
 
-Current consumer compatibility:
+Current coordinated line:
 
 | Core | Jarvis | AI Stack Server | Python |
 | --- | --- | --- | --- |
-| 0.2.x | Current `main` | Current `main` | 3.10+ |
+| 0.8.0 | v0.8.x consumer | v0.8.x consumer | 3.10+ |
 
-## Development and contribution
+The consumer v0.8.1 audit specifically corrected a release drift where merged v0.8 source still packaged Core 0.7.0. The release-order rule above is now documented and consumer regressions enforce the pin.
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change. All
-contributors must follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+## Development
 
 ```bash
 black --check src tests
@@ -120,20 +132,13 @@ python -m build
 python -m twine check dist/*
 ```
 
-Use GitHub Issues for reproducible bugs and focused feature requests. Read
-[SUPPORT.md](SUPPORT.md) for support boundaries. Report vulnerabilities
-privately according to [SECURITY.md](SECURITY.md).
+Read [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [SUPPORT.md](SUPPORT.md) and [SECURITY.md](SECURITY.md) before contributing/reporting issues.
 
 ## Releases and supply chain
 
-Merging a new version to `main` runs validation and creates a GitHub Release
-when that version is new. The workflow builds the wheel and source archive,
-creates SHA-256 checksums, and publishes build-provenance attestations. PyPI is
-an optional additional channel and cannot block the GitHub Release.
+A new package version merged to `main` is built/validated and, when the tag/version does not already exist, published as a GitHub Release with checksums and build-provenance attestations. PyPI is optional.
 
-Release consumers should use the immutable artifact URL plus SHA-256 shown
-above. Increment `project.version` for every release; an existing release is
-never replaced automatically.
+Docs-only pushes with unchanged `project.version` may execute the Release workflow, but the workflow detects the existing v0.8.0 release and leaves its immutable assets unchanged.
 
 ## License
 
