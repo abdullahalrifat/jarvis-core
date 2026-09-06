@@ -1,11 +1,21 @@
-from jarvis_core.quality import ClaimProof, CompletionRequirement, EvidenceGate, ProofKind
+from jarvis_core.quality import (
+    ClaimProof,
+    CompletionRequirement,
+    EvidenceGate,
+    ProofKind,
+)
 
 
 def test_independent_gate_accepts_distinct_execution_identities():
     gate = EvidenceGate()
     requirement = CompletionRequirement("verification", (ProofKind.TEST,))
     proofs = [
-        ClaimProof("verification", ProofKind.TEST, "run-a", independent_key="verifier-a"),
+        ClaimProof(
+            "verification",
+            ProofKind.TEST,
+            "run-a",
+            independent_key="verifier-a",
+        ),
     ]
     assert gate.audit_independent((requirement,), proofs).passed
 
