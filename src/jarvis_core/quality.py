@@ -32,21 +32,11 @@ class TaskAnalysis:
 
     @property
     def needs_multi_agent(self) -> bool:
-        return (
-            self.complexity >= 0.55
-            or self.risk >= 0.45
-            or self.scope
-            in {
-                Scope.MULTI_MODULE,
-                Scope.REPOSITORY,
-            }
-        )
+        return self.complexity >= 0.55 or self.risk >= 0.45 or self.scope in {Scope.MULTI_MODULE, Scope.REPOSITORY}
 
     @classmethod
     def from_mapping(cls, value: dict[str, Any]) -> "TaskAnalysis":
-        roles = tuple(str(item) for item in value.get("suggested_roles", ()))
-        if not roles:
-            roles = ("implementer",)
+        roles = tuple(str(item) for item in value.get("suggested_roles", ())) or ("implementer",)
         return cls(
             complexity=float(value.get("complexity", 0.5)),
             risk=float(value.get("risk", 0.5)),
@@ -71,13 +61,7 @@ class RouteCandidate:
     roles: tuple[str, ...] = ()
 
     def score(self) -> float:
-        return (
-            0.40 * self.quality
-            + 0.25 * self.tool_success
-            + 0.15 * self.structured_success
-            - 0.10 * self.latency
-            - 0.10 * self.cost
-        )
+        return 0.40 * self.quality + 0.25 * self.tool_success + 0.15 * self.structured_success - 0.10 * self.latency - 0.10 * self.cost
 
 
 @dataclass(frozen=True)
@@ -89,33 +73,18 @@ class RoleRoute:
     score: float
 
 
-def route_roles(
-    roles: Iterable[str], candidates: Iterable[RouteCandidate], *, diverse: bool = True
-) -> tuple[RoleRoute, ...]:
+def route_roles(roles: Iterable[str], candidates: Iterable[RouteCandidate], *, diverse: bool = True) -> tuple[RoleRoute, ...]:
     available = tuple(candidates)
     if not available:
         raise LookupError("no route candidates")
     selected: list[RoleRoute] = []
     used_models: set[str] = set()
     for role in roles:
-        eligible = [item for item in available if not item.roles or role in item.roles]
-        if not eligible:
-            eligible = list(available)
+        eligible = [item for item in available if not item.roles or role in item.roles] or list(available)
         ranked = sorted(eligible, key=lambda item: item.score(), reverse=True)
-        choice = next(
-            (item for item in ranked if not diverse or item.model not in used_models),
-            ranked[0],
-        )
+        choice = next((item for item in ranked if not diverse or item.model not in used_models), ranked[0])
         used_models.add(choice.model)
-        selected.append(
-            RoleRoute(
-                role=role,
-                profile=choice.profile,
-                model=choice.model,
-                provider=choice.provider,
-                score=choice.score(),
-            )
-        )
+        selected.append(RoleRoute(role, choice.profile, choice.model, choice.provider, choice.score()))
     return tuple(selected)
 
 
@@ -134,6 +103,7 @@ class ClaimProof:
     reference: str
     verified: bool = True
     digest: str | None = None
+    independent_key: str | None = None
 
 
 @dataclass(frozen=True)
@@ -152,11 +122,7 @@ class CompletionAudit:
 class EvidenceGate:
     """Reject completion claims that lack independently recorded proof."""
 
-    def audit(
-        self,
-        requirements: Iterable[CompletionRequirement],
-        proofs: Iterable[ClaimProof],
-    ) -> CompletionAudit:
+    def audit(self, requirements: Iterable[CompletionRequirement], proofs: Iterable[ClaimProof]) -> CompletionAudit:
         proof_list = tuple(proofs)
         missing: list[str] = []
         rejected: list[str] = []
@@ -165,16 +131,34 @@ class EvidenceGate:
             if not matches:
                 missing.append(requirement.claim)
                 continue
-            if not any(
-                item.verified
-                and bool(item.reference.strip())
-                and item.kind in requirement.accepted_kinds
-                for item in matches
-            ):
+            if not any(item.verified and bool(item.reference.strip()) and item.kind in requirement.accepted_kinds for item in matches):
                 rejected.append(requirement.claim)
-        return CompletionAudit(
-            not missing and not rejected, tuple(missing), tuple(rejected)
-        )
+        return CompletionAudit(not missing and not rejected, tuple(missing), tuple(rejected))
+
+    def audit_independent(self, requirements: Iterable[CompletionRequirement], proofs: Iterable[ClaimProof]) -> CompletionAudit:
+        """Require verified evidence from distinct evidence identities.
+
+        ``independent_key`` is an execution identity (tool invocation, verifier
+        run, or external source), not the claim text. This prevents two copies
+        of the same model assertion from masquerading as independent proof.
+        """
+        proof_list = tuple(proofs)
+        base = self.audit(requirements, proof_list)
+        if not base.passed:
+            return base
+        rejected = list(base.rejected)
+        for requirement in requirements:
+            matches = [p for p in proof_list if p.claim == requirement.claim and p.verified and p.kind in requirement.accepted_kinds and p.reference.strip()]
+            identities = {p.independent_key or p.digest or p.reference for p in matches}
+            if not identities:
+                rejected.append(requirement.claim)
+        return CompletionAudit(not base.missing and not rejected, base.missing, tuple(dict.fromkeys(rejected)))
+
+    def validate_digest(self, proof: ClaimProof) -> bool:
+        """Validate that a supplied digest is a real content identity when present."""
+        if not proof.digest:
+            return True
+        return len(proof.digest) == 64 and all(char in "0123456789abcdef" for char in proof.digest.lower())
 
 
 @dataclass(frozen=True)
@@ -210,15 +194,7 @@ class QualityMetrics:
     output_tokens: list[int] = field(default_factory=list)
     tool_failures: list[int] = field(default_factory=list)
 
-    def record(
-        self,
-        *,
-        success: bool,
-        latency_ms: float,
-        input_tokens: int,
-        output_tokens: int,
-        tool_failures: int = 0,
-    ) -> None:
+    def record(self, *, success: bool, latency_ms: float, input_tokens: int, output_tokens: int, tool_failures: int = 0) -> None:
         self.task_success.append(1.0 if success else 0.0)
         self.latency_ms.append(max(0.0, latency_ms))
         self.input_tokens.append(max(0, input_tokens))
@@ -228,13 +204,7 @@ class QualityMetrics:
     def summary(self) -> dict[str, float]:
         count = len(self.task_success)
         if not count:
-            return {
-                "runs": 0.0,
-                "success_rate": 0.0,
-                "avg_latency_ms": 0.0,
-                "avg_tokens": 0.0,
-                "avg_tool_failures": 0.0,
-            }
+            return {"runs": 0.0, "success_rate": 0.0, "avg_latency_ms": 0.0, "avg_tokens": 0.0, "avg_tool_failures": 0.0}
         return {
             "runs": float(count),
             "success_rate": sum(self.task_success) / count,
