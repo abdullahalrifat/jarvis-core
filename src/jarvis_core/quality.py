@@ -32,10 +32,15 @@ class TaskAnalysis:
 
     @property
     def needs_multi_agent(self) -> bool:
-        return self.complexity >= 0.55 or self.risk >= 0.45 or self.scope in {
-            Scope.MULTI_MODULE,
-            Scope.REPOSITORY,
-        }
+        return (
+            self.complexity >= 0.55
+            or self.risk >= 0.45
+            or self.scope
+            in {
+                Scope.MULTI_MODULE,
+                Scope.REPOSITORY,
+            }
+        )
 
     @classmethod
     def from_mapping(cls, value: dict[str, Any]) -> "TaskAnalysis":
@@ -103,7 +108,9 @@ def route_roles(
         )
         used_models.add(choice.model)
         selected.append(
-            RoleRoute(role, choice.profile, choice.model, choice.provider, choice.score())
+            RoleRoute(
+                role, choice.profile, choice.model, choice.provider, choice.score()
+            )
         )
     return tuple(selected)
 
@@ -186,9 +193,7 @@ class EvidenceGate:
                 and p.kind in requirement.accepted_kinds
                 and p.reference.strip()
             ]
-            identities = {
-                p.independent_key or p.digest or p.reference for p in matches
-            }
+            identities = {p.independent_key or p.digest or p.reference for p in matches}
             if not identities:
                 rejected.append(requirement.claim)
         return CompletionAudit(
