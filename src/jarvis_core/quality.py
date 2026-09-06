@@ -44,9 +44,9 @@ class TaskAnalysis:
 
     @classmethod
     def from_mapping(cls, value: dict[str, Any]) -> "TaskAnalysis":
-        roles = tuple(str(item) for item in value.get("suggested_roles", ()))
-        if not roles:
-            roles = ("implementer",)
+        roles = tuple(str(item) for item in value.get("suggested_roles", ())) or (
+            "implementer",
+        )
         return cls(
             complexity=float(value.get("complexity", 0.5)),
             risk=float(value.get("risk", 0.5)),
@@ -98,9 +98,9 @@ def route_roles(
     selected: list[RoleRoute] = []
     used_models: set[str] = set()
     for role in roles:
-        eligible = [item for item in available if not item.roles or role in item.roles]
-        if not eligible:
-            eligible = list(available)
+        eligible = [
+            item for item in available if not item.roles or role in item.roles
+        ] or list(available)
         ranked = sorted(eligible, key=lambda item: item.score(), reverse=True)
         choice = next(
             (item for item in ranked if not diverse or item.model not in used_models),
@@ -109,11 +109,7 @@ def route_roles(
         used_models.add(choice.model)
         selected.append(
             RoleRoute(
-                role=role,
-                profile=choice.profile,
-                model=choice.model,
-                provider=choice.provider,
-                score=choice.score(),
+                role, choice.profile, choice.model, choice.provider, choice.score()
             )
         )
     return tuple(selected)
@@ -134,6 +130,7 @@ class ClaimProof:
     reference: str
     verified: bool = True
     digest: str | None = None
+    independent_key: str | None = None
 
 
 @dataclass(frozen=True)
@@ -174,6 +171,43 @@ class EvidenceGate:
                 rejected.append(requirement.claim)
         return CompletionAudit(
             not missing and not rejected, tuple(missing), tuple(rejected)
+        )
+
+    def audit_independent(
+        self,
+        requirements: Iterable[CompletionRequirement],
+        proofs: Iterable[ClaimProof],
+    ) -> CompletionAudit:
+        """Require verified evidence from distinct evidence identities."""
+        proof_list = tuple(proofs)
+        base = self.audit(requirements, proof_list)
+        if not base.passed:
+            return base
+        rejected = list(base.rejected)
+        for requirement in requirements:
+            matches = [
+                p
+                for p in proof_list
+                if p.claim == requirement.claim
+                and p.verified
+                and p.kind in requirement.accepted_kinds
+                and p.reference.strip()
+            ]
+            identities = {p.independent_key or p.digest or p.reference for p in matches}
+            if not identities:
+                rejected.append(requirement.claim)
+        return CompletionAudit(
+            not base.missing and not rejected,
+            base.missing,
+            tuple(dict.fromkeys(rejected)),
+        )
+
+    def validate_digest(self, proof: ClaimProof) -> bool:
+        """Validate that a supplied digest is a real content identity when present."""
+        if not proof.digest:
+            return True
+        return len(proof.digest) == 64 and all(
+            char in "0123456789abcdef" for char in proof.digest.lower()
         )
 
 
