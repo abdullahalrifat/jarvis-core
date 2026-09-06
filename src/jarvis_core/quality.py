@@ -162,7 +162,9 @@ class EvidenceGate:
                 for item in matches
             ):
                 rejected.append(requirement.claim)
-        return CompletionAudit(not missing and not rejected, tuple(missing), tuple(rejected))
+        return CompletionAudit(
+            not missing and not rejected, tuple(missing), tuple(rejected)
+        )
 
     def audit_independent(
         self,
