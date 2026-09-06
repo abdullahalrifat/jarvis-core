@@ -178,24 +178,44 @@ class EvidenceGate:
         requirements: Iterable[CompletionRequirement],
         proofs: Iterable[ClaimProof],
     ) -> CompletionAudit:
-        """Require verified evidence from distinct evidence identities."""
+        """Require valid, explicitly identifiable evidence for each claim.
+
+        Evidence identity is explicit when ``independent_key`` is supplied and
+        otherwise falls back to a validated digest. References alone are not
+        sufficient because the same mutable reference can be reused by an
+        implementation and its verifier.
+        """
+        requirement_list = tuple(requirements)
         proof_list = tuple(proofs)
-        base = self.audit(requirements, proof_list)
+        base = self.audit(requirement_list, proof_list)
         if not base.passed:
             return base
+
         rejected = list(base.rejected)
-        for requirement in requirements:
+        for proof in proof_list:
+            if proof.digest and not self.validate_digest(proof):
+                rejected.append(proof.claim)
+
+        for requirement in requirement_list:
             matches = [
-                p
-                for p in proof_list
-                if p.claim == requirement.claim
-                and p.verified
-                and p.kind in requirement.accepted_kinds
-                and p.reference.strip()
+                proof
+                for proof in proof_list
+                if proof.claim == requirement.claim
+                and proof.verified
+                and proof.kind in requirement.accepted_kinds
+                and proof.reference.strip()
             ]
-            identities = {p.independent_key or p.digest or p.reference for p in matches}
+            identities = {
+                proof.independent_key or proof.digest
+                for proof in matches
+                if proof.independent_key or proof.digest
+            }
             if not identities:
                 rejected.append(requirement.claim)
+                continue
+            if len(identities) != len(matches):
+                rejected.append(requirement.claim)
+
         return CompletionAudit(
             not base.missing and not rejected,
             base.missing,

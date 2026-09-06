@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.9.4
+
+- Enforce independent evidence identities in `EvidenceGate.audit_independent()`.
+- Reject reference-only evidence when independent proof is required.
+- Reject malformed evidence digests and duplicate evidence identities for the same claim.
+- Add regression coverage for independent-evidence acceptance and fail-closed rejection cases.
+
+This version is pending release. The v0.9.4 package and checksum become authoritative only after the release workflow validates the merged release commit.
+
+## 0.9.3
+
+- Current published Core release following the 0.9.2 consumer line.
+
 ## 0.9.2
 
 - Fix optional evidence line handling so autonomous execution does not compare `None` with integers.

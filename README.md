@@ -7,18 +7,17 @@
 
 `jarvis-agent-core` is the small typed dependency-free Python contract/runtime library shared by standalone Jarvis and AI Stack Server. It standardizes portable agent behavior without owning product-specific tools, storage, credentials, deployment policy or OS isolation.
 
-The current coordinated release is **Core 0.9.2**.
+The current published release is **Core 0.9.3**. The pending evidence-independence fix in this branch is prepared as **Core 0.9.4** and must be released only after this PR is merged and the release workflow validates the exact release commit.
 
 ## Install
 
-Python 3.10+ is required. The verified v0.9.2 release wheel is:
+Python 3.10+ is required. For the currently published v0.9.3 release, install the exact immutable release artifact from the GitHub Releases page. After PR #23 is merged and v0.9.4 is published, update consumers to the v0.9.4 wheel and its generated SHA-256 checksum; do not guess or pre-publish a checksum.
 
 ```bash
-python -m pip install \
-  "jarvis-agent-core @ https://github.com/abdullahalrifat/jarvis-core/releases/download/v0.9.2/jarvis_agent_core-0.9.2-py3-none-any.whl#sha256=0ff9b5cfba29dca8d05df69a48573c3a69cc73ca9654e7122411b89a489f1130"
+python -m pip install "jarvis-agent-core @ https://github.com/abdullahalrifat/jarvis-core/releases/download/v0.9.3/jarvis_agent_core-0.9.3-py3-none-any.whl"
 ```
 
-The release asset is checksum-addressed so consumers do not depend on a mutable branch or checkout.
+The release asset is checksum-addressed in consumer lockfiles so consumers do not depend on a mutable branch or checkout.
 
 For development:
 
@@ -39,7 +38,7 @@ See [docs/contract-boundaries.md](docs/contract-boundaries.md) for the enforceme
 
 ## Contract enforcement matters
 
-A Core field is not automatically a security control. Consumers must enforce approval before dispatch, durable lease predicates for cloud state, real execution-derived proof, and credential isolation.
+A Core field is not automatically a security control. Consumers must enforce approval before dispatch, durable lease predicates for cloud state, real execution-derived proof, and credential isolation. Independent evidence must also have a verifiable identity and must not be satisfied by reference-only or duplicate evidence for the same claim.
 
 ## Compatibility and release policy
 
@@ -53,9 +52,9 @@ Current coordinated line:
 
 | Core | Jarvis | AI Stack Server | Python |
 | --- | --- | --- | --- |
-| **0.9.2** | **0.9.1** | **0.9.2 contract consumer** | 3.10+ |
+| **0.9.3 published / 0.9.4 pending** | **0.9.1** | **0.9.3 consumer target** | 3.10+ |
 
-The 0.9.2 release is the source of truth for the current consumer pin. Consumer CI verifies the exact version/checksum rather than a mutable branch.
+After v0.9.4 is released, consumer repositories must be updated to the exact v0.9.4 artifact and checksum before their coordinated release is declared current.
 
 ## Development
 
@@ -71,7 +70,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md
 
 ## Releases and supply chain
 
-A new package version merged to `main` is built/validated and, when the tag/version does not already exist, published as a GitHub Release with checksums and build-provenance attestations. Existing immutable releases are never replaced.
+A new package version merged to `main` is built/validated and, when the tag/version does not already exist, published as a GitHub Release with checksums and build-provenance attestations. Existing immutable releases are never replaced. v0.9.4 must not be referenced as a published artifact until the release workflow has completed successfully.
 
 ## License
 
