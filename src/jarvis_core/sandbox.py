@@ -26,7 +26,11 @@ class TaskResourceLimits:
             raise ValueError("sandbox cpus must be between 0 and 128")
         if self.pids < 16 or self.pids > 100_000:
             raise ValueError("sandbox pids must be between 16 and 100000")
-        for name, value in (("memory", self.memory), ("disk", self.disk), ("tmpfs", self.tmpfs)):
+        for name, value in (
+            ("memory", self.memory),
+            ("disk", self.disk),
+            ("tmpfs", self.tmpfs),
+        ):
             if not value or any(char in value for char in "\r\n"):
                 raise ValueError(f"sandbox {name} is invalid")
 
@@ -49,7 +53,9 @@ class TaskSandboxPolicy:
             image=os.getenv(f"{prefix}SANDBOX_IMAGE", "").strip(),
             network=network,
             egress_network=os.getenv(f"{prefix}EGRESS_NETWORK") or None,
-            workspace_read_only=os.getenv(f"{prefix}WORKSPACE_READONLY", "0").casefold()
+            workspace_read_only=os.getenv(
+                f"{prefix}WORKSPACE_READONLY", "0"
+            ).casefold()
             in {"1", "true", "yes"},
             user=os.getenv(f"{prefix}SANDBOX_USER", "65532:65532"),
             seccomp=os.getenv(f"{prefix}SECCOMP", "default"),
@@ -73,7 +79,9 @@ class TaskSandboxPolicy:
         if self.network == "egress" and (
             not self.egress_network or self.egress_network in {"bridge", "host"}
         ):
-            raise SandboxError("egress isolation requires a dedicated policy-enforced Docker network")
+            raise SandboxError(
+                "egress isolation requires a dedicated policy-enforced Docker network"
+            )
         if not self.user or self.user == "0" or self.user.startswith("0:"):
             raise SandboxError("sandbox must not run as root")
         self.limits.validate()
@@ -109,29 +117,48 @@ def build_task_command(
 
     limits = policy.limits
     command = [
-        "docker", "run", "--rm", "--init", "--read-only",
-        "--network", "none" if policy.network == "deny" else policy.egress_network or "none",
-        "--cpus", str(limits.cpus),
-        "--memory", limits.memory, "--memory-swap", limits.memory,
-        "--pids-limit", str(limits.pids),
-        "--storage-opt", f"size={limits.disk}",
-        "--tmpfs", f"/tmp:rw,nosuid,nodev,noexec,size={limits.tmpfs},mode=1777",
-        "--tmpfs", "/run:rw,size=64m,mode=755",
-        "--tmpfs", "/var/tmp:rw,size=64m,mode=1777",
-        "--security-opt", "no-new-privileges:true",
-        "--security-opt", f"seccomp={policy.seccomp}",
-        "--cap-drop", "ALL",
-        "--user", policy.user,
+        "docker",
+        "run",
+        "--rm",
+        "--init",
+        "--read-only",
+        "--network",
+        "none" if policy.network == "deny" else policy.egress_network or "none",
+        "--cpus",
+        str(limits.cpus),
+        "--memory",
+        limits.memory,
+        "--memory-swap",
+        limits.memory,
+        "--pids-limit",
+        str(limits.pids),
+        "--storage-opt",
+        f"size={limits.disk}",
+        "--tmpfs",
+        f"/tmp:rw,nosuid,nodev,noexec,size={limits.tmpfs},mode=1777",
+        "--tmpfs",
+        "/run:rw,size=64m,mode=755",
+        "--tmpfs",
+        "/var/tmp:rw,size=64m,mode=1777",
+        "--security-opt",
+        "no-new-privileges:true",
+        "--security-opt",
+        f"seccomp={policy.seccomp}",
+        "--cap-drop",
+        "ALL",
+        "--user",
+        policy.user,
     ]
     if policy.apparmor_profile:
         command += ["--security-opt", f"apparmor={policy.apparmor_profile}"]
     command += [
         "--mount",
         f"type=bind,src={root},dst=/workspace,readonly={'true' if policy.workspace_read_only else 'false'}",
-        "--workdir", "/workspace", policy.image,
+        "--workdir",
+        "/workspace",
+        policy.image,
     ]
     return [*command, *[str(item) for item in argv]]
 
 
-# Compatibility alias for application adapters during migration.
 IsolationError = SandboxError
