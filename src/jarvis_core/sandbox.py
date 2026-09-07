@@ -153,7 +153,10 @@ def build_task_command(
         command += ["--security-opt", f"apparmor={policy.apparmor_profile}"]
     command += [
         "--mount",
-        f"type=bind,src={root},dst=/workspace,readonly={'true' if policy.workspace_read_only else 'false'}",
+        (
+            f"type=bind,src={root},dst=/workspace,"
+            f"readonly={'true' if policy.workspace_read_only else 'false'}"
+        ),
         "--workdir",
         "/workspace",
         policy.image,
