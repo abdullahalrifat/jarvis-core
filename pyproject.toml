@@ -44,3 +44,9 @@ jarvis_core = ["py.typed"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.black]
+target-version = ["py310"]
+
+[tool.ruff]
+target-version = "py310"
