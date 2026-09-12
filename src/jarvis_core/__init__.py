@@ -54,6 +54,7 @@ from .autonomous import (
     permission_decision,
     require_transition,
 )
+from .lineage import AgentLineage, LineageProof, LINEAGE_SCHEMA_VERSION
 from .quality import (
     AdaptivePlan,
     ClaimProof,
@@ -260,6 +261,9 @@ __all__ = [
     "next_cron",
     "permission_decision",
     "require_transition",
+    "AgentLineage",
+    "LineageProof",
+    "LINEAGE_SCHEMA_VERSION",
     "IsolationError",
     "SandboxError",
     "TaskResourceLimits",

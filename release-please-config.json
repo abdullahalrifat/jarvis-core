@@ -1,0 +1,16 @@
+{
+  "release-type": "python",
+  "package-name": "jarvis-agent-core",
+  "bump-minor-pre-major": false,
+  "changelog-types": [
+    {"type": "feat", "section": "Features"},
+    {"type": "fix", "section": "Bug Fixes"},
+    {"type": "perf", "section": "Performance"},
+    {"type": "docs", "section": "Documentation"},
+    {"type": "refactor", "section": "Refactoring"},
+    {"type": "test", "section": "Tests"},
+    {"type": "build", "section": "Build"},
+    {"type": "ci", "section": "CI"},
+    {"type": "chore", "section": "Chore"}
+  ]
+}

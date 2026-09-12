@@ -1,154 +1,28 @@
-name: Release
+name: Release PR
 
 on:
   push:
     branches: [main]
-
-concurrency:
-  group: jarvis-core-release
-  cancel-in-progress: false
+  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: jarvis-core-release-pr
+  cancel-in-progress: false
 
 jobs:
-  validate-and-build:
-    name: Validate and build exact release SHA
+  release-please:
+    name: Create or update release PR
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      tag: ${{ steps.version.outputs.tag }}
-      release_needed: ${{ steps.release.outputs.needed }}
-      validated_sha: ${{ steps.validated.outputs.sha }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Release Please
+        uses: googleapis/release-please-action@v4
         with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install validation and build dependencies
-        run: python -m pip install -e . -r requirements-dev.txt build twine
-      - name: Validate source
-        run: |
-          black --check src tests
-          ruff check src tests --select E9,F63,F7,F82
-          mypy src
-          pytest -q --cov=jarvis_core --cov-report=term-missing --cov-fail-under=85
-      - name: Record validated SHA
-        id: validated
-        run: echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
-      - name: Read and validate package version
-        id: version
-        shell: bash
-        run: |
-          version="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([abrc][0-9]+)?$ ]]; then
-            echo "Unsupported Python release version: $version" >&2
-            exit 1
-          fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "tag=v$version" >> "$GITHUB_OUTPUT"
-      - name: Check whether release is new
-        id: release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.version.outputs.tag }}
-        shell: bash
-        run: |
-          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release $RELEASE_TAG already exists; no artifacts will be rebuilt."
-            echo "needed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "Release $RELEASE_TAG is new."
-            echo "needed=true" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Build distributions
-        if: steps.release.outputs.needed == 'true'
-        run: python -m build
-      - name: Validate distributions
-        if: steps.release.outputs.needed == 'true'
-        run: python -m twine check dist/*
-      - name: Verify wheel in a clean environment
-        if: steps.release.outputs.needed == 'true'
-        shell: bash
-        run: |
-          python -m venv /tmp/jarvis-core-release
-          /tmp/jarvis-core-release/bin/python -m pip install dist/*.whl
-          /tmp/jarvis-core-release/bin/python -c "import importlib.metadata as m; assert m.version('jarvis-agent-core') == '${{ steps.version.outputs.version }}'"
-          /tmp/jarvis-core-release/bin/python -c "from jarvis_core import ExecutionProof, VerificationRecord; assert ExecutionProof and VerificationRecord"
-      - name: Create checksums
-        if: steps.release.outputs.needed == 'true'
-        run: cd dist && sha256sum * > SHA256SUMS
-      - uses: actions/upload-artifact@v4
-        if: steps.release.outputs.needed == 'true'
-        with:
-          name: python-package-distributions-${{ github.sha }}
-          path: dist/
-          if-no-files-found: error
-          retention-days: 30
-
-  github-release:
-    name: Publish validated GitHub release
-    needs: validate-and-build
-    if: needs.validate-and-build.outputs.release_needed == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: python-package-distributions-${{ needs.validate-and-build.outputs.validated_sha }}
-          path: dist/
-      - name: Refuse a mismatched release SHA
-        env:
-          VALIDATED_SHA: ${{ needs.validate-and-build.outputs.validated_sha }}
-        run: test "$GITHUB_SHA" = "$VALIDATED_SHA"
-      - name: Attest distributions
-        uses: actions/attest-build-provenance@v3
-        with:
-          subject-path: "dist/*"
-      - name: Create release from the validated SHA
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ needs.validate-and-build.outputs.tag }}
-          RELEASE_VERSION: ${{ needs.validate-and-build.outputs.version }}
-          VALIDATED_SHA: ${{ needs.validate-and-build.outputs.validated_sha }}
-        shell: bash
-        run: |
-          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "GitHub release $RELEASE_TAG already exists; leaving it unchanged."
-            exit 0
-          fi
-          gh release create "$RELEASE_TAG" dist/* \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$VALIDATED_SHA" \
-            --title "Jarvis Core $RELEASE_VERSION" \
-            --generate-notes
-
-  publish-pypi:
-    name: Publish validated distributions to PyPI
-    needs: [validate-and-build, github-release]
-    if: needs.validate-and-build.outputs.release_needed == 'true'
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/project/jarvis-agent-core/
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: python-package-distributions-${{ needs.validate-and-build.outputs.validated_sha }}
-          path: dist/
-      - name: Remove non-package checksum file
-        run: rm dist/SHA256SUMS
-      - name: Verify distributions before publication
-        run: |
-          python -m pip install --upgrade twine
-          python -m twine check dist/*
-      - name: Publish to PyPI using Trusted Publishing
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist/
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          skip-github-release: true
