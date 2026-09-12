@@ -19,11 +19,20 @@ def test_capability_policy_is_fail_closed():
 
 
 def test_approval_round_trip_shape():
-    request = ApprovalRequest(Capability.GIT_PUSH, "publish reviewed changes", "repository")
+    request = ApprovalRequest(
+        Capability.GIT_PUSH,
+        "publish reviewed changes",
+        "repository",
+    )
     response = ApprovalResponse(request, ApprovalDecision.ALLOW)
     assert response.request.capability is Capability.GIT_PUSH
     assert response.decision is ApprovalDecision.ALLOW
 
 
 def test_sandbox_requirements_validate():
-    SandboxRequirements(network="egress", cpus=4, memory="4g", pids=512).validate()
+    SandboxRequirements(
+        network="egress",
+        cpus=4,
+        memory="4g",
+        pids=512,
+    ).validate()
