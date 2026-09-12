@@ -65,7 +65,9 @@ def execution_evidence(
     del kind
     digest = None
     if output is not None:
-        digest = hashlib.sha256(output.encode("utf-8", errors="replace")).hexdigest()
+        digest = hashlib.sha256(
+            output.encode("utf-8", errors="replace")
+        ).hexdigest()
     evidence = Evidence(
         claim=claim,
         path=path or reference,
@@ -77,5 +79,7 @@ def execution_evidence(
 
 
 def checkpoint_digest(value: Any) -> str:
-    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
+    payload = json.dumps(
+        value, sort_keys=True, separators=(",", ":"), default=str
+    )
     return hashlib.sha256(payload.encode()).hexdigest()
