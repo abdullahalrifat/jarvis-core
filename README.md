@@ -2,22 +2,25 @@
 
 [![Validate](https://github.com/abdullahalrifat/jarvis-core/actions/workflows/validate.yml/badge.svg)](https://github.com/abdullahalrifat/jarvis-core/actions/workflows/validate.yml)
 [![Release](https://img.shields.io/github/v/release/abdullahalrifat/jarvis-core)](https://github.com/abdullahalrifat/jarvis-core/releases)
+[![PyPI](https://img.shields.io/pypi/v/jarvis-agent-core.svg)](https://pypi.org/project/jarvis-agent-core/)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 `jarvis-agent-core` is the small typed dependency-free Python contract/runtime library shared by standalone Jarvis and AI Stack Server. It standardizes portable agent behavior without owning product-specific tools, storage, credentials, deployment policy or OS isolation.
 
-The current published release is **Core 0.9.3**. The pending evidence-independence fix in this branch is prepared as **Core 0.9.4** and must be released only after this PR is merged and the release workflow validates the exact release commit.
-
 ## Install
 
-Python 3.10+ is required. For the currently published v0.9.3 release, install the exact immutable release artifact from the GitHub Releases page. After PR #23 is merged and v0.9.4 is published, update consumers to the v0.9.4 wheel and its generated SHA-256 checksum; do not guess or pre-publish a checksum.
+Python 3.10+ is required. Once a release is published to PyPI, install it normally:
 
 ```bash
-python -m pip install "jarvis-agent-core @ https://github.com/abdullahalrifat/jarvis-core/releases/download/v0.9.3/jarvis_agent_core-0.9.3-py3-none-any.whl"
+python -m pip install jarvis-agent-core
 ```
 
-The release asset is checksum-addressed in consumer lockfiles so consumers do not depend on a mutable branch or checkout.
+For a reproducible consumer dependency, pin a specific release:
+
+```bash
+python -m pip install "jarvis-agent-core==0.9.4"
+```
 
 For development:
 
@@ -45,16 +48,15 @@ A Core field is not automatically a security control. Consumers must enforce app
 - semantic versioning is used while the pre-1.0 API stabilizes;
 - patch releases should remain compatible within a minor line;
 - breaking contracts require coordinated Core/Jarvis/Server releases;
-- publish Core first, then pin consumers to the immutable released artifact/checksum;
-- an existing GitHub Release is never silently replaced.
+- publish Core first, then pin consumers to the released package version;
+- an existing GitHub Release is never silently replaced;
+- PyPI publication uses GitHub Actions Trusted Publishing; no long-lived PyPI API token is stored in GitHub.
 
 Current coordinated line:
 
 | Core | Jarvis | AI Stack Server | Python |
 | --- | --- | --- | --- |
-| **0.9.3 published / 0.9.4 pending** | **0.9.1** | **0.9.3 consumer target** | 3.10+ |
-
-After v0.9.4 is released, consumer repositories must be updated to the exact v0.9.4 artifact and checksum before their coordinated release is declared current.
+| **0.9.4** | **0.9.1** | **0.9.3 consumer target** | 3.10+ |
 
 ## Development
 
@@ -70,7 +72,22 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md
 
 ## Releases and supply chain
 
-A new package version merged to `main` is built/validated and, when the tag/version does not already exist, published as a GitHub Release with checksums and build-provenance attestations. Existing immutable releases are never replaced. v0.9.4 must not be referenced as a published artifact until the release workflow has completed successfully.
+A version bump merged to `main` is validated against the exact commit, built as a wheel and sdist, checked with Twine, smoke-tested in a clean environment, checksummed, provenance-attested and published as a GitHub Release. A separate release-triggered workflow then publishes the exact GitHub Release distributions to PyPI using Trusted Publishing. Existing immutable releases are never replaced.
+
+### Release flow
+
+```text
+merge to main
+    -> validate + test
+    -> build wheel/sdist
+    -> clean-environment install check
+    -> SHA-256 checksums + provenance attestation
+    -> GitHub Release vX.Y.Z
+    -> release event
+    -> PyPI Trusted Publishing
+```
+
+Consumers should depend on the PyPI package rather than a Git checkout or mutable branch. During local development, use an editable install of a checked-out `jarvis-core` repository.
 
 ## License
 
