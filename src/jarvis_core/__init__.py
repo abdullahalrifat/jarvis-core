@@ -54,7 +54,6 @@ from .autonomous import (
     permission_decision,
     require_transition,
 )
-
 from .quality import (
     AdaptivePlan,
     ClaimProof,
@@ -70,6 +69,63 @@ from .quality import (
     adaptive_plan,
     route_roles,
     stable_cache_key,
+)
+from .benchmarks import BenchmarkObservation, BenchmarkRegistry
+from .policy import (
+    AttachmentDescriptor,
+    Instruction,
+    InstructionLevel,
+    MCPServerConfig,
+    MemoryRecord,
+    ToolPermission,
+    resolve_instructions,
+)
+from .resilience import CircuitState, IdempotencyLedger, ProviderHealth, ProviderPool
+from .review import ChangeTransaction, ReviewHunk, ReviewState
+from .verification import ClaimAssessment, SourceAssessment, SourceKind, rank_sources
+from .teams import TaskStatus, TeamBoard, TeamTask
+from .telemetry import SpanRecord, Telemetry
+from .calibration import RouteCalibrator, RouteObservation, RouteScore
+from .platform import (
+    BackgroundJob,
+    JobStatus,
+    PluginManifest,
+    RemoteRunSpec,
+    ScheduleSpec,
+)
+from .reliability import (
+    CompiledContext,
+    ContextItem,
+    EscalationDecision,
+    EvidenceConfidence,
+    FailureClass,
+    FailureMemory,
+    FailureMemoryRecord,
+    FailureSignature,
+    ImpactGraph,
+    ImpactNode,
+    PatchPlan,
+    PatchTarget,
+    RetryDecision,
+    SpeculationPolicy,
+    ToolArtifact,
+    VerifierEnvelope,
+    compile_context,
+    compress_tool_result,
+    escalation_policy,
+    evidence_confidence,
+    minimize_patch_paths,
+    retry_policy,
+    speculation_policy,
+)
+from .sandbox import (
+    IsolationError,
+    SandboxError,
+    TaskResourceLimits,
+    TaskSandboxPolicy,
+    build_task_command,
+    docker_available,
+    validate_host_boundary,
 )
 
 __all__ = [
@@ -132,68 +188,6 @@ __all__ = [
     "adaptive_plan",
     "route_roles",
     "stable_cache_key",
-]
-
-from .benchmarks import BenchmarkObservation, BenchmarkRegistry
-from .policy import (
-    AttachmentDescriptor,
-    Instruction,
-    InstructionLevel,
-    MCPServerConfig,
-    MemoryRecord,
-    ToolPermission,
-    resolve_instructions,
-)
-from .resilience import (
-    CircuitState,
-    IdempotencyLedger,
-    ProviderHealth,
-    ProviderPool,
-)
-from .review import ChangeTransaction, ReviewHunk, ReviewState
-from .verification import (
-    ClaimAssessment,
-    SourceAssessment,
-    SourceKind,
-    rank_sources,
-)
-from .teams import TaskStatus, TeamBoard, TeamTask
-from .telemetry import SpanRecord, Telemetry
-from .calibration import RouteCalibrator, RouteObservation, RouteScore
-from .platform import (
-    BackgroundJob,
-    JobStatus,
-    PluginManifest,
-    RemoteRunSpec,
-    ScheduleSpec,
-)
-from .reliability import (
-    CompiledContext,
-    ContextItem,
-    EscalationDecision,
-    EvidenceConfidence,
-    FailureClass,
-    FailureMemory,
-    FailureMemoryRecord,
-    FailureSignature,
-    ImpactGraph,
-    ImpactNode,
-    PatchPlan,
-    PatchTarget,
-    RetryDecision,
-    SpeculationPolicy,
-    ToolArtifact,
-    VerifierEnvelope,
-    compile_context,
-    compress_tool_result,
-    escalation_policy,
-    evidence_confidence,
-    minimize_patch_paths,
-    retry_policy,
-    speculation_policy,
-)
-
-__all__ += [
     "AttachmentDescriptor",
     "BenchmarkObservation",
     "BenchmarkRegistry",
@@ -250,9 +244,6 @@ __all__ += [
     "minimize_patch_paths",
     "retry_policy",
     "speculation_policy",
-]
-
-__all__ += [
     "ExecutionProof",
     "ExecutionProofLedger",
     "ExecutionState",
@@ -269,4 +260,11 @@ __all__ += [
     "next_cron",
     "permission_decision",
     "require_transition",
+    "IsolationError",
+    "SandboxError",
+    "TaskResourceLimits",
+    "TaskSandboxPolicy",
+    "build_task_command",
+    "docker_available",
+    "validate_host_boundary",
 ]
