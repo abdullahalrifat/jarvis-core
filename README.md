@@ -12,10 +12,10 @@ The package is designed to be useful **standalone**. Any Python application can 
 
 ## Install
 
-Python 3.10+ is required. The current release is **0.12.0**.
+Python 3.10+ is required. The current release is **0.13.0**.
 
 ```bash
-python -m pip install "jarvis-agent-core==0.12.0"
+python -m pip install "jarvis-agent-core==0.13.0"
 ```
 
 For development:
@@ -33,6 +33,8 @@ Core contains provider-neutral building blocks for:
 
 - model requests, responses, usage and tool calls;
 - provider capability and routing primitives;
+- agent capabilities and approval decisions;
+- portable sandbox requirements and consumer-owned sandbox executor contracts;
 - token accounting, budgets and context compaction;
 - artifacts and content-addressed references;
 - evidence, verification and completion requirements;
@@ -46,6 +48,28 @@ Core contains provider-neutral building blocks for:
 - review/change transactions and verification policy;
 - reusable sandbox policy and host-boundary validation.
 
+## Common agent brain boundary
+
+Core owns the **meaning** of agent execution: model contracts, tool vocabulary, capabilities, approval semantics, evidence, verification, execution state and portable isolation requirements. Applications own the actual execution adapters.
+
+```text
+                    jarvis-agent-core
+                ┌────────────────────────┐
+                │ Model / tool contracts  │
+                │ Capabilities / approval │
+                │ Execution state / proof │
+                │ Evidence / verification│
+                │ Sandbox requirements   │
+                └───────────┬────────────┘
+                            │
+              ┌─────────────┴──────────────┐
+              │                            │
+       local application             server application
+       CLI / OS sandbox              API / worker / Docker
+```
+
+The Core boundary is deliberately implementation-neutral. A CLI can implement a sandbox with native OS primitives, while a server can implement the same requirements with containers or another isolated worker. Both consume the same policy semantics.
+
 ## Provider-neutral model boundary
 
 Core defines the model boundary but never ships a model-provider SDK.
@@ -57,24 +81,13 @@ Your application
       ▼
 ┌──────────────────────────────┐
 │        jarvis-agent-core     │
-│                              │
-│ ModelRequest                 │
-│ ModelResponse                │
-│ ModelUsage                   │
-│ ToolCall                     │
+│ ModelRequest / Response      │
+│ ModelUsage / ToolCall        │
 │ ModelProvider                │
 │ normalization helpers        │
 │ runtime contracts/primitives │
 └──────────────────────────────┘
-      ▲
-      │
-      ├── hosted model adapter
-      ├── local model adapter
-      ├── OpenAI-compatible adapter
-      └── any future provider
 ```
-
-`ModelRequest`, `ModelResponse`, `ModelUsage` and `ToolCall` are dependency-free data contracts. `normalize_usage()`, `normalize_tool_call()`, `normalize_tool_calls()` and `make_model_response()` provide common normalization semantics without coupling Core to any provider SDK.
 
 Concrete HTTP transports, SDK clients, credentials, endpoint-specific request formatting, retries and provider-specific error handling remain application responsibilities.
 
@@ -88,7 +101,7 @@ Core does not:
 - provide a database or persistence backend;
 - provide a web server, CLI or user interface;
 - start MCP processes;
-- enforce operating-system isolation;
+- enforce operating-system isolation itself;
 - provide a cloud-worker implementation;
 - impose tenancy, deployment or organization policy.
 

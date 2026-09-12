@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.13.0
+
+### Features
+
+- Add provider-neutral capability and approval primitives for shared agent runtimes.
+- Add portable sandbox requirements and a consumer-owned `SandboxExecutor` protocol.
+- Keep platform enforcement in consumers while making capability, approval and isolation semantics common Core contracts.
+
+### Architecture
+
+- Establish Core as the common agent brain: contracts and policy semantics live here; CLI/server execution adapters remain consumer-owned.
+- Avoid duplicating execution-state semantics: the existing autonomous execution lifecycle remains the canonical shared state machine.
+
 ## 0.12.0
 
 ### Features
@@ -50,66 +63,3 @@
 - Added the shared token-efficient agent runtime and provider-neutral subagent proof lineage.
 - Added model routing/calibration, evidence independence, execution verification and release workflow improvements.
 - Added coordinated-release, PyPI Trusted Publishing and automated release lifecycle documentation.
-
-## 0.9.4
-
-- Enforce independent evidence identities in `EvidenceGate.audit_independent()`.
-- Reject reference-only evidence when independent proof is required.
-- Reject malformed evidence digests and duplicate evidence identities for the same claim.
-- Add regression coverage for independent-evidence acceptance and fail-closed rejection cases.
-
-## 0.9.3
-
-- Current published Core release following the 0.9.2 consumer line.
-
-## 0.9.2
-
-- Fix optional evidence line handling so autonomous execution does not compare `None` with integers.
-- Tighten public typing across autonomous execution, messaging and telemetry contracts.
-- Enforce `mypy` in pull-request and exact-release validation.
-
-## 0.9.1
-
-- Gate release publication on formatting, lint, tests, coverage and package validation for the exact release commit.
-- Verify the built wheel in a clean environment before publication.
-- Bind uploaded artifacts, attestations and the GitHub release tag to the same validated commit SHA.
-- Supersede the unvalidated v0.9.0 build without mutating its published assets.
-
-## 0.9.0
-
-- Add a versioned execution-proof envelope shared by independent agent clients and servers.
-- Fence completion proof to the exact task ID, lease ID and attempt.
-- Bind workspace, mutation, verification output and result artifacts with SHA-256 digests.
-- Reject malformed proof versions, failed verification records and mismatched execution identities.
-- Export `ExecutionProof`, `VerificationRecord` and `PROOF_SCHEMA_VERSION` as public Core contracts.
-
-## 0.8.0
-
-- Add autonomous execution-state contracts and validated transition rules for leased, running, verifying, uploading, cancellation, retry, timeout and terminal states.
-- Add attempt-scoped lease/fencing-token contracts, execution proof-ledger records and deterministic permission-policy decisions.
-- Add shared cron matching/next-run semantics.
-
-## 0.7.0
-
-- Add selective speculation, failure-driven escalation, verifier isolation, evidence confidence, impact-aware verification, retry ceilings and patch-minimization contracts.
-
-## 0.6.0
-
-- Add shared agent-team task/status/board contracts, durable job/schedule/plugin/remote-run contracts, route calibration and OpenTelemetry-compatible tracing records.
-
-## 0.5.0
-
-- Extend repository/developer-intelligence contracts while preserving Core's runtime-neutral boundary.
-
-## 0.4.0
-
-- Add adaptive complexity/risk planning, heterogeneous role routing, execution-backed completion evidence, quality metrics and stable cache identities.
-
-## 0.3.0
-
-- Add provider health scoring, circuit breakers, ordered fallback and retry-safe operation idempotency.
-- Add source assessment, benchmark observations, calibrated model selection, reversible change-ledger contracts, hierarchical instructions, memory, MCP policy and multimodal attachment budgets.
-
-## 0.2.0
-
-- Add token reservations/provider usage accounting, provider-neutral compaction, content-addressed artifacts, structured evidence, verification verdicts, versioned role prompts, multi-agent contracts, capability routing, recovery, citation-safe search evidence, evaluation runners and redacted trace/replay primitives.

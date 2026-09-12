@@ -14,6 +14,13 @@ from .artifacts import (
     MemoryArtifactStore,
 )
 from .capabilities import CapabilityRegistry, ModelCapabilities, ModelProfile
+from .capability_policy import (
+    ApprovalDecision,
+    ApprovalRequest,
+    ApprovalResponse,
+    Capability,
+    CapabilityPolicy,
+)
 from .context import compact_messages, delta_context, summarize_tool_result
 from .messages import canonical_message, to_anthropic_messages, to_openai_messages
 from .evals import EvalCase, EvalResult, run_evals, score_output
@@ -139,11 +146,17 @@ from .sandbox import (
     docker_available,
     validate_host_boundary,
 )
+from .sandbox_policy import SandboxExecutor, SandboxRequirements
 
 __all__ = [
     "CapabilityRegistry",
     "ModelCapabilities",
     "ModelProfile",
+    "Capability",
+    "CapabilityPolicy",
+    "ApprovalDecision",
+    "ApprovalRequest",
+    "ApprovalResponse",
     "ModelProvider",
     "ModelRequest",
     "ModelResponse",
@@ -291,4 +304,6 @@ __all__ = [
     "build_task_command",
     "docker_available",
     "validate_host_boundary",
+    "SandboxExecutor",
+    "SandboxRequirements",
 ]
