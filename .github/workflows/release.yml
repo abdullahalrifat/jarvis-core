@@ -3,13 +3,6 @@ name: Release
 on:
   push:
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      publish_pypi:
-        description: Publish to PyPI after creating the GitHub release
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
   group: jarvis-core-release
@@ -135,9 +128,9 @@ jobs:
             --generate-notes
 
   publish-pypi:
-    name: Optionally publish to PyPI
+    name: Publish validated distributions to PyPI
     needs: [validate-and-build, github-release]
-    if: ${{ vars.PUBLISH_PYPI == 'true' || inputs.publish_pypi == true }}
+    if: needs.validate-and-build.outputs.release_needed == 'true'
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -151,4 +144,11 @@ jobs:
           path: dist/
       - name: Remove non-package checksum file
         run: rm dist/SHA256SUMS
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Verify distributions before publication
+        run: |
+          python -m pip install --upgrade twine
+          python -m twine check dist/*
+      - name: Publish to PyPI using Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/

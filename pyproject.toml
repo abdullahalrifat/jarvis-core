@@ -19,7 +19,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -34,6 +34,7 @@ Documentation = "https://github.com/abdullahalrifat/jarvis-core#readme"
 Repository = "https://github.com/abdullahalrifat/jarvis-core"
 Changelog = "https://github.com/abdullahalrifat/jarvis-core/blob/main/CHANGELOG.md"
 Issues = "https://github.com/abdullahalrifat/jarvis-core/issues"
+PyPI = "https://pypi.org/project/jarvis-agent-core/"
 
 [tool.setuptools.packages.find]
 where = ["src"]
