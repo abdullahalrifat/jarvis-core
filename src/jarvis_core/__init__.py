@@ -9,8 +9,13 @@ from .execution_maturity import (
     checkpoint_digest,
     execution_evidence,
 )
-# Existing public exports are intentionally preserved below.
-from .agents import AgentBackend, AgentResult, SelectiveOrchestrator, TaskProfile, classify_task
+from .agents import (
+    AgentBackend,
+    AgentResult,
+    SelectiveOrchestrator,
+    TaskProfile,
+    classify_task,
+)
 from .artifacts import Artifact, ArtifactResolver, FileArtifactStore, MemoryArtifactStore
 from .capabilities import CapabilityRegistry, ModelCapabilities, ModelProfile
 from .capability_policy import ApprovalDecision, ApprovalRequest, ApprovalResponse, Capability, CapabilityPolicy
@@ -24,39 +29,23 @@ from .tracing import TraceEvent, TraceRecorder, redact
 from .evidence import Evidence, EvidenceLedger, EvidenceStatus, VerificationStatus, VerificationVerdict
 from .prompts import PromptRegistry, PromptTemplate, default_prompt_registry
 from .tokens import BudgetExceeded, TokenBudget, TokenLedger, TokenReservation, Usage, estimate_tokens
-from .autonomous import *
+from .autonomous import ExecutionProof, ExecutionProofLedger, ExecutionState, LeaseToken, PermissionAction, PermissionDecision, PermissionRule, ProofKind as AutonomousProofKind, ProofRecord, PROOF_SCHEMA_VERSION, VerificationRecord, can_transition, cron_matches, next_cron, permission_decision, require_transition
 from .lineage import AgentLineage, LineageProof, LINEAGE_SCHEMA_VERSION
-from .quality import *
+from .quality import AdaptivePlan, ClaimProof, CompletionAudit, CompletionRequirement, EvidenceGate, ProofKind, QualityMetrics, RoleRoute, RouteCandidate, Scope, TaskAnalysis, adaptive_plan, route_roles, stable_cache_key
 from .benchmarks import BenchmarkObservation, BenchmarkRegistry
-from .policy import *
-from .resilience import *
+from .policy import AttachmentDescriptor, Instruction, InstructionLevel, MCPServerConfig, MemoryRecord, ToolPermission, resolve_instructions
+from .resilience import CircuitState, IdempotencyLedger, ProviderHealth, ProviderPool
 from .review import ChangeTransaction, ReviewHunk, ReviewState
 from .verification import ClaimAssessment, SourceAssessment, SourceKind, rank_sources
 from .teams import TaskStatus, TeamBoard, TeamTask
 from .telemetry import SpanRecord, Telemetry
 from .calibration import RouteCalibrator, RouteObservation, RouteScore
 from .platform import BackgroundJob, JobStatus, PluginManifest, RemoteRunSpec, ScheduleSpec
-from .reliability import *
+from .reliability import CompiledContext, ContextItem, EscalationDecision, EvidenceConfidence, FailureClass, FailureMemory, FailureMemoryRecord, FailureSignature, ImpactGraph, ImpactNode, PatchPlan, PatchTarget, RetryDecision, SpeculationPolicy, ToolArtifact, VerifierEnvelope, compile_context, compress_tool_result, escalation_policy, evidence_confidence, minimize_patch_paths, retry_policy, speculation_policy
 from .sandbox import IsolationError, SandboxError, TaskResourceLimits, TaskSandboxPolicy, build_task_command, docker_available, validate_host_boundary
 from .sandbox_policy import SandboxExecutor, SandboxRequirements
 
 __all__ = [
-    "Checkpoint", "ProcessHandle", "ProcessStatus", "SteeringAction", "SteeringCommand",
-    "checkpoint_digest", "execution_evidence", "AgentBackend", "AgentResult", "SelectiveOrchestrator",
-    "TaskProfile", "classify_task", "Artifact", "ArtifactResolver", "FileArtifactStore", "MemoryArtifactStore",
-    "CapabilityRegistry", "ModelCapabilities", "ModelProfile", "ApprovalDecision", "ApprovalRequest",
-    "ApprovalResponse", "Capability", "CapabilityPolicy", "compact_messages", "delta_context",
-    "summarize_tool_result", "canonical_message", "to_anthropic_messages", "to_openai_messages", "EvalCase",
-    "EvalResult", "run_evals", "score_output", "ModelProvider", "ModelRequest", "ModelResponse", "ModelUsage",
-    "ToolCall", "make_model_response", "normalize_tool_call", "normalize_tool_calls", "normalize_usage",
-    "FailureKind", "RecoveryDecision", "classify_failure", "SearchResult", "citation_context", "normalize_search_results",
-    "TraceEvent", "TraceRecorder", "redact", "Evidence", "EvidenceLedger", "EvidenceStatus", "VerificationStatus",
-    "VerificationVerdict", "PromptRegistry", "PromptTemplate", "default_prompt_registry", "BudgetExceeded",
-    "TokenBudget", "TokenLedger", "TokenReservation", "Usage", "estimate_tokens", "AgentLineage", "LineageProof",
-    "LINEAGE_SCHEMA_VERSION", "BenchmarkObservation", "BenchmarkRegistry", "ChangeTransaction", "ReviewHunk",
-    "ReviewState", "ClaimAssessment", "SourceAssessment", "SourceKind", "rank_sources", "TaskStatus", "TeamBoard",
-    "TeamTask", "SpanRecord", "Telemetry", "RouteCalibrator", "RouteObservation", "RouteScore", "BackgroundJob",
-    "JobStatus", "PluginManifest", "RemoteRunSpec", "ScheduleSpec", "IsolationError", "SandboxError",
-    "TaskResourceLimits", "TaskSandboxPolicy", "build_task_command", "docker_available", "validate_host_boundary",
-    "SandboxExecutor", "SandboxRequirements",
+    "Checkpoint", "ProcessHandle", "ProcessStatus", "SteeringAction", "SteeringCommand", "checkpoint_digest", "execution_evidence",
+    "CapabilityRegistry", "ModelCapabilities", "ModelProfile", "Capability", "CapabilityPolicy", "ApprovalDecision", "ApprovalRequest", "ApprovalResponse", "ModelProvider", "ModelRequest", "ModelResponse", "ModelUsage", "ToolCall", "make_model_response", "normalize_tool_call", "normalize_tool_calls", "normalize_usage", "EvalCase", "EvalResult", "FailureKind", "RecoveryDecision", "SearchResult", "TraceEvent", "TraceRecorder", "citation_context", "classify_failure", "normalize_search_results", "redact", "run_evals", "score_output", "AgentBackend", "AgentResult", "Artifact", "ArtifactResolver", "BudgetExceeded", "estimate_tokens", "Evidence", "EvidenceLedger", "EvidenceStatus", "FileArtifactStore", "MemoryArtifactStore", "PromptRegistry", "PromptTemplate", "SelectiveOrchestrator", "TaskProfile", "TokenBudget", "TokenLedger", "TokenReservation", "Usage", "VerificationStatus", "VerificationVerdict", "classify_task", "canonical_message", "compact_messages", "to_anthropic_messages", "to_openai_messages", "default_prompt_registry", "delta_context", "summarize_tool_result", "AdaptivePlan", "ClaimProof", "CompletionAudit", "CompletionRequirement", "EvidenceGate", "ProofKind", "QualityMetrics", "RoleRoute", "RouteCandidate", "Scope", "TaskAnalysis", "adaptive_plan", "route_roles", "stable_cache_key", "AttachmentDescriptor", "BenchmarkObservation", "BenchmarkRegistry", "ChangeTransaction", "CircuitState", "ClaimAssessment", "IdempotencyLedger", "Instruction", "InstructionLevel", "MCPServerConfig", "MemoryRecord", "ProviderHealth", "ProviderPool", "ReviewHunk", "ReviewState", "SourceAssessment", "SourceKind", "ToolPermission", "rank_sources", "resolve_instructions", "TaskStatus", "TeamBoard", "TeamTask", "SpanRecord", "Telemetry", "RouteCalibrator", "RouteObservation", "RouteScore", "BackgroundJob", "JobStatus", "PluginManifest", "RemoteRunSpec", "ScheduleSpec", "CompiledContext", "ContextItem", "EscalationDecision", "EvidenceConfidence", "FailureClass", "FailureMemory", "FailureMemoryRecord", "FailureSignature", "ImpactGraph", "ImpactNode", "PatchPlan", "PatchTarget", "RetryDecision", "SpeculationPolicy", "ToolArtifact", "VerifierEnvelope", "compile_context", "compress_tool_result", "escalation_policy", "evidence_confidence", "minimize_patch_paths", "retry_policy", "speculation_policy", "ExecutionProof", "ExecutionProofLedger", "ExecutionState", "LeaseToken", "PermissionAction", "PermissionDecision", "PermissionRule", "AutonomousProofKind", "ProofRecord", "PROOF_SCHEMA_VERSION", "VerificationRecord", "can_transition", "cron_matches", "next_cron", "permission_decision", "require_transition", "AgentLineage", "LineageProof", "LINEAGE_SCHEMA_VERSION", "IsolationError", "SandboxError", "TaskResourceLimits", "TaskSandboxPolicy", "build_task_command", "docker_available", "validate_host_boundary", "SandboxExecutor", "SandboxRequirements",
 ]
