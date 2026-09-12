@@ -1,4 +1,4 @@
-"""Shared token-efficient agent runtime."""
+"""Shared, provider-neutral agent runtime contracts and primitives."""
 
 from .agents import (
     AgentBackend,
@@ -17,7 +17,17 @@ from .capabilities import CapabilityRegistry, ModelCapabilities, ModelProfile
 from .context import compact_messages, delta_context, summarize_tool_result
 from .messages import canonical_message, to_anthropic_messages, to_openai_messages
 from .evals import EvalCase, EvalResult, run_evals, score_output
-from .providers import ModelProvider, ModelRequest, ModelResponse, ModelUsage, ToolCall
+from .providers import (
+    ModelProvider,
+    ModelRequest,
+    ModelResponse,
+    ModelUsage,
+    ToolCall,
+    make_model_response,
+    normalize_tool_call,
+    normalize_tool_calls,
+    normalize_usage,
+)
 from .recovery import FailureKind, RecoveryDecision, classify_failure
 from .search import SearchResult, citation_context, normalize_search_results
 from .tracing import TraceEvent, TraceRecorder, redact
@@ -139,6 +149,10 @@ __all__ = [
     "ModelResponse",
     "ModelUsage",
     "ToolCall",
+    "make_model_response",
+    "normalize_tool_call",
+    "normalize_tool_calls",
+    "normalize_usage",
     "EvalCase",
     "EvalResult",
     "FailureKind",

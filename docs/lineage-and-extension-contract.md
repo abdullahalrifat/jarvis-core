@@ -1,6 +1,6 @@
 # Lineage and extension contract
 
-`jarvis-core` is intentionally provider-neutral. `AgentLineage` and `LineageProof` provide a stable parent/child delegation contract without introducing HTTP, GitHub, IDE, scheduler or model dependencies.
+`jarvis-agent-core` is intentionally provider-neutral. `AgentLineage` and `LineageProof` provide a stable parent/child delegation contract without introducing HTTP, Git, IDE, scheduler or model-provider dependencies.
 
 A parent creates a child lineage node with:
 
@@ -11,11 +11,15 @@ A parent creates a child lineage node with:
 
 A child result can be bound to evidence digests through `LineageProof`. The proof digest makes changes to the lineage or evidence detectable.
 
-Future orchestration systems can therefore add parallel subagents, reviewers, research agents or remote workers without changing Core when the model/provider changes.
+Applications can therefore add parallel subagents, reviewers, research agents or remote workers without changing Core when the model/provider changes.
 
 ## Boundary
 
-Core owns contracts and verification primitives. Jarvis owns workstation UX/protocol adapters. AI Stack owns durable orchestration, provider routing, GitHub automation, scheduling and tenancy policy.
+Core owns portable contracts, validation and reusable runtime primitives. The embedding application owns user experience, transport, persistence, scheduling, credentials, provider adapters and infrastructure enforcement.
+
+## Extension rule
+
+New reusable behavior belongs in Core only when it is provider-neutral, application-agnostic and testable without external services. Provider SDKs, network clients, databases and deployment-specific implementations stay outside Core.
 
 ## CI
 

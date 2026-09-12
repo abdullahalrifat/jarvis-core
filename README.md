@@ -6,14 +6,16 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-`jarvis-agent-core` is the small typed, dependency-free Python contract/runtime library shared by standalone Jarvis and AI Stack Server. It standardizes portable agent behavior without owning product-specific tools, storage, credentials, deployment policy, model-provider SDKs, or OS isolation.
+`jarvis-agent-core` is a small, typed, dependency-free Python library for building portable AI-agent runtimes. It provides reusable contracts and deterministic runtime primitives without requiring a particular model vendor, application, database, deployment platform, user interface or operating-system sandbox.
+
+The package is designed to be useful **standalone**. Any Python application can install it, implement the provider protocol, and reuse the shared runtime contracts.
 
 ## Install
 
-Python 3.10+ is required. The current Core release is **0.11.0**.
+Python 3.10+ is required. The current release is **0.12.0**.
 
 ```bash
-python -m pip install "jarvis-agent-core==0.11.0"
+python -m pip install "jarvis-agent-core==0.12.0"
 ```
 
 For development:
@@ -25,66 +27,99 @@ python -m pip install -e . -r requirements-dev.txt
 python -m pytest
 ```
 
-## Capabilities
+## What Core provides
 
-Core provides typed deterministic contracts/primitives for token accounting, context compaction, artifacts, evidence/verification, model routing/calibration, failure recovery, multi-agent orchestration, instructions/memory, MCP permissions, schedules/remote execution, leases, proof records, citations and evaluation cases. The 0.10.x line also exposes the shared per-task sandbox policy used by Jarvis and AI Stack Server.
+Core contains provider-neutral building blocks for:
 
-### Provider-neutral model contracts
+- model requests, responses, usage and tool calls;
+- provider capability and routing primitives;
+- token accounting, budgets and context compaction;
+- artifacts and content-addressed references;
+- evidence, verification and completion requirements;
+- failure classification, recovery and retry policy;
+- multi-agent tasks, teams and orchestration;
+- instructions, memory and MCP permission vocabulary;
+- schedules, remote-run and execution-state contracts;
+- leases, permissions and execution-proof records;
+- repository/developer-intelligence primitives;
+- evaluation cases, benchmarks and tracing;
+- review/change transactions and verification policy;
+- reusable sandbox policy and host-boundary validation.
 
-Core 0.11.0 adds dependency-free contracts for model providers:
+## Provider-neutral model boundary
 
-- `ModelRequest` describes a provider-independent completion request.
-- `ModelResponse` carries normalized output, tool calls and usage information.
-- `ModelUsage` represents token accounting without depending on a provider SDK.
-- `ToolCall` represents normalized model-requested tool invocation data.
-- `ModelProvider` defines the provider boundary consumed by higher-level runtimes.
-
-These are **contracts, not provider implementations**. Anthropic, Ollama, OpenAI-compatible endpoints, LiteLLM and other concrete integrations belong in consumer/runtime projects. This keeps Core portable and prevents provider SDKs from becoming transitive dependencies of every Jarvis installation.
-
-Conceptually:
+Core defines the model boundary but never ships a model-provider SDK.
 
 ```text
-jarvis-core
-    │ provider-neutral contracts
-    ▼
-jarvis
-    │ concrete provider adapters
-    ▼
-ai-stack / external endpoints
-    ├── Ollama
-    ├── LiteLLM
-    └── hosted model APIs
+Your application
+      │
+      │ implements ModelProvider
+      ▼
+┌──────────────────────────────┐
+│        jarvis-agent-core     │
+│                              │
+│ ModelRequest                 │
+│ ModelResponse                │
+│ ModelUsage                   │
+│ ToolCall                     │
+│ ModelProvider                │
+│ normalization helpers        │
+│ runtime contracts/primitives │
+└──────────────────────────────┘
+      ▲
+      │
+      ├── hosted model adapter
+      ├── local model adapter
+      ├── OpenAI-compatible adapter
+      └── any future provider
 ```
 
-Consumers should depend on the Core contracts rather than importing provider-specific SDK types into shared agent logic.
+`ModelRequest`, `ModelResponse`, `ModelUsage` and `ToolCall` are dependency-free data contracts. `normalize_usage()`, `normalize_tool_call()`, `normalize_tool_calls()` and `make_model_response()` provide common normalization semantics without coupling Core to any provider SDK.
 
-Core deliberately does **not** access repositories, execute commands, call model endpoints, start MCP processes, persist product sessions, run cloud workers, enforce tenancy, or approve changes. Jarvis/Server must wire contracts into the real execution path; OS sandbox enforcement remains a consumer/runtime responsibility.
+Concrete HTTP transports, SDK clients, credentials, endpoint-specific request formatting, retries and provider-specific error handling remain application responsibilities.
 
-See [docs/contract-boundaries.md](docs/contract-boundaries.md) for the enforcement and trust boundary.
+## What Core deliberately does not do
 
-## Contract enforcement matters
+Core does not:
 
-A Core field is not automatically a security control. Consumers must enforce approval before dispatch, durable lease predicates for cloud state, real execution-derived proof, and credential isolation. Independent evidence must also have a verifiable identity and must not be satisfied by reference-only or duplicate evidence for the same claim.
+- call model APIs;
+- store API keys or credentials;
+- execute shell commands or arbitrary repository changes;
+- provide a database or persistence backend;
+- provide a web server, CLI or user interface;
+- start MCP processes;
+- enforce operating-system isolation;
+- provide a cloud-worker implementation;
+- impose tenancy, deployment or organization policy.
+
+This boundary keeps the package portable and safe to embed in different applications.
 
 ## Compatibility and release policy
 
 - semantic versioning is used while the pre-1.0 API stabilizes;
 - patch releases should remain compatible within a minor line;
-- breaking contracts require coordinated Core/Jarvis/Server releases;
-- publish Core first, then pin consumers to the released package version;
-- an existing GitHub Release is never silently replaced;
-- PyPI publication uses GitHub Actions Trusted Publishing; no long-lived PyPI API token is stored in GitHub.
+- breaking public contracts require a new minor version while the API remains pre-1.0;
+- releases are immutable once published;
+- PyPI publication uses GitHub Actions Trusted Publishing;
+- the package README is the PyPI project description, so documentation changes intended for PyPI require a new package version.
 
-Current release coordination:
+### Release flow
 
-| Component | Version |
-| --- | --- |
-| Core | **0.11.0** |
-| Jarvis | update to **0.11.0 Core** after the Core release is published |
-| AI Stack Server | update to **0.11.0 Core** after the Core release is published |
-| Python | 3.10+ |
+```text
+code/docs change
+    -> CI
+    -> merge to main
+    -> validate exact merged SHA
+    -> build wheel + sdist
+    -> clean-environment install check
+    -> checksums + provenance
+    -> GitHub Release
+    -> PyPI Trusted Publishing
+```
 
-## Development
+Consumers should depend on a published PyPI version rather than a mutable Git branch. During local development, an editable checkout may be used explicitly.
+
+## Development checks
 
 ```bash
 black --check src tests
@@ -94,32 +129,7 @@ python -m build
 python -m twine check dist/*
 ```
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), [SUPPORT.md](SUPPORT.md) and [SECURITY.md](SECURITY.md) before contributing/reporting issues.
-
-## Releases and supply chain
-
-Core releases are versioned explicitly. A version bump merged to `main` is validated against the exact commit, built as a wheel and sdist, checked with Twine, smoke-tested in a clean environment, checksummed, provenance-attested and published as a GitHub Release. The same release workflow then publishes the exact validated distributions to PyPI using Trusted Publishing. Existing immutable releases are never replaced.
-
-The package metadata points at `README.md`, so the README from the exact release commit is also used as the PyPI project description. Documentation changes that need to appear on PyPI therefore require a new package version; an existing published release should not be mutated.
-
-### Release flow
-
-```text
-version/code/documentation PR
-    -> CI
-    -> merge to main
-    -> validate exact merged SHA
-    -> build wheel/sdist
-    -> clean-environment install check
-    -> SHA-256 checksums + provenance attestation
-    -> GitHub Release vX.Y.Z
-    -> PyPI Trusted Publishing
-    -> consumer repositories update their pinned Core version
-```
-
-For an already-created GitHub release that needs a publication retry, maintainers can use the `workflow_dispatch` input on `.github/workflows/release.yml` and select the immutable release tag. This is for republishing an existing version only; a documentation or code correction must use a new semantic version.
-
-Consumers should depend on the PyPI package rather than a Git checkout or mutable branch. During local development, use an editable install of a checked-out `jarvis-core` repository.
+See [docs/contract-boundaries.md](docs/contract-boundaries.md), [docs/releasing.md](docs/releasing.md), [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
 ## License
 
