@@ -1,6 +1,5 @@
 {
-  "release-type": "python",
-  "package-name": "jarvis-agent-core",
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "bump-minor-pre-major": false,
   "changelog-types": [
     {"type": "feat", "section": "Features"},
@@ -12,5 +11,11 @@
     {"type": "build", "section": "Build"},
     {"type": "ci", "section": "CI"},
     {"type": "chore", "section": "Chore"}
-  ]
+  ],
+  "packages": {
+    ".": {
+      "release-type": "python",
+      "package-name": "jarvis-agent-core"
+    }
+  }
 }
