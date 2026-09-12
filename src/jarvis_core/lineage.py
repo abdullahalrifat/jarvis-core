@@ -1,9 +1,4 @@
-"""Provider-neutral parent/child agent lineage and proof contracts.
-
-The contracts deliberately contain no model/provider/transport details. They let
-server and client runtimes prove that delegated work belongs to a parent task
-without coupling Core to a particular orchestration implementation.
-"""
+"""Provider-neutral parent/child agent lineage and proof contracts."""
 
 from __future__ import annotations
 
@@ -16,7 +11,9 @@ LINEAGE_SCHEMA_VERSION = 1
 
 
 def _digest(payload: Mapping[str, Any]) -> str:
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+    encoded = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), default=str
+    )
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
@@ -114,6 +111,8 @@ class LineageProof:
         return cls(
             lineage=lineage,
             result_digest=str(value.get("result_digest") or ""),
-            evidence_digests=tuple(str(item) for item in value.get("evidence_digests", [])),
+            evidence_digests=tuple(
+                str(item) for item in value.get("evidence_digests", [])
+            ),
             proof_digest=str(value.get("proof_digest") or ""),
         )
