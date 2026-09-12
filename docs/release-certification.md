@@ -1,6 +1,6 @@
 # Release certification
 
-The current published Core release is **Jarvis Core 0.12.0**.
+The current published Core release is **Jarvis Core 0.13.0**.
 
 ## Contract gates
 
@@ -9,6 +9,10 @@ Before publication, the exact release commit must pass formatting, lint, typing,
 ## Provider neutrality
 
 Core remains dependency-free with respect to model-provider SDKs and infrastructure clients. Provider normalization helpers operate on ordinary Python mappings and Core contracts without importing vendor libraries.
+
+## Common-brain boundary
+
+Core owns provider-neutral agent semantics: model and tool contracts, capabilities, approval decisions, evidence and verification, execution state/proof, and portable sandbox requirements. Embedding applications own actual execution adapters such as CLI/OS sandbox enforcement or server/Docker worker isolation.
 
 ## Evidence boundary
 
