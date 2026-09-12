@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.12.0
+
+### Features
+
+- Extend the provider-neutral model boundary with reusable usage, tool-call and response normalization helpers.
+- Export the normalization helpers from the public Core API so independent agent applications can share canonical model semantics.
+- Keep the provider contract dependency-free and suitable for any application or integration.
+
+### Architecture
+
+- Core owns provider-neutral contracts and reusable runtime primitives only.
+- Provider SDKs, HTTP transports, credentials, persistence, user interfaces, deployment and operating-system enforcement remain outside Core.
+- Core documentation is standalone and does not depend on or name downstream/private applications.
+
+### Documentation
+
+- Rewrite the package architecture documentation around standalone reuse.
+- Remove downstream application-specific release instructions from the public Core documentation.
+- Clarify that the PyPI README is generated from the exact release commit.
+
 ## 0.11.0
 
 ### Features
@@ -14,7 +34,6 @@
 ### Architecture
 
 - Keep provider SDKs and concrete integrations outside Core.
-- Allow Jarvis and AI Stack Server to adapt Anthropic, Ollama, OpenAI-compatible, LiteLLM and future providers without making those SDKs Core dependencies.
 - Preserve Core's dependency-free contract boundary so shared agent behavior remains portable across local and hosted model backends.
 
 ### Documentation
