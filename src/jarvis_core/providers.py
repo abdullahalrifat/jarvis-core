@@ -69,7 +69,9 @@ def normalize_usage(value: Mapping[str, Any] | None) -> ModelUsage:
 
     value = value or {}
     input_tokens = int(value.get("input_tokens", value.get("prompt_tokens", 0)) or 0)
-    output_tokens = int(value.get("output_tokens", value.get("completion_tokens", 0)) or 0)
+    output_tokens = int(
+        value.get("output_tokens", value.get("completion_tokens", 0)) or 0
+    )
     total_tokens = int(value.get("total_tokens", input_tokens + output_tokens) or 0)
     estimated_cost = value.get("estimated_cost")
     if estimated_cost is not None:
@@ -107,7 +109,9 @@ def normalize_tool_call(
     )
 
 
-def normalize_tool_calls(values: Sequence[Mapping[str, Any]] | None) -> tuple[ToolCall, ...]:
+def normalize_tool_calls(
+    values: Sequence[Mapping[str, Any]] | None,
+) -> tuple[ToolCall, ...]:
     """Normalize a sequence of provider tool-call mappings."""
 
     return tuple(
