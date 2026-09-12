@@ -10,16 +10,10 @@
 
 ## Install
 
-Python 3.10+ is required. Once a release is published to PyPI, install it normally:
+Python 3.10+ is required. The current coordinated release is **0.9.5**:
 
 ```bash
-python -m pip install jarvis-agent-core
-```
-
-For a reproducible consumer dependency, pin a specific published release:
-
-```bash
-python -m pip install "jarvis-agent-core==X.Y.Z"
+python -m pip install "jarvis-agent-core==0.9.5"
 ```
 
 For development:
@@ -33,9 +27,9 @@ python -m pytest
 
 ## Capabilities
 
-Core provides typed deterministic contracts/primitives for token accounting, context compaction, artifacts, evidence/verification, model routing/calibration, failure recovery, multi-agent orchestration, instructions/memory, MCP permissions, schedules/remote execution, leases, proof records, citations and evaluation cases.
+Core provides typed deterministic contracts/primitives for token accounting, context compaction, artifacts, evidence/verification, model routing/calibration, failure recovery, multi-agent orchestration, instructions/memory, MCP permissions, schedules/remote execution, leases, proof records, citations and evaluation cases. The 0.9.5 line also exposes the shared per-task sandbox policy used by Jarvis and AI Stack Server.
 
-Core deliberately does **not** access repositories, execute commands, call model endpoints, start MCP processes, persist product sessions, run cloud workers, enforce tenancy, implement OS sandboxes or approve changes. Jarvis/Server must wire contracts into the real execution path.
+Core deliberately does **not** access repositories, execute commands, call model endpoints, start MCP processes, persist product sessions, run cloud workers, enforce tenancy, or approve changes. Jarvis/Server must wire contracts into the real execution path; OS sandbox enforcement remains a consumer/runtime responsibility.
 
 See [docs/contract-boundaries.md](docs/contract-boundaries.md) for the enforcement and trust boundary.
 
@@ -56,7 +50,7 @@ Current coordinated line:
 
 | Core | Jarvis | AI Stack Server | Python |
 | --- | --- | --- | --- |
-| **0.9.4 GitHub release / PyPI pending** | **0.9.1** | **0.9.3 consumer target** | 3.10+ |
+| **0.9.5** | **0.9.2** | **0.9.5 consumer** | 3.10+ |
 
 ## Development
 
