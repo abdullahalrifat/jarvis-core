@@ -4,28 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jarvis-agent-core"
-version = "0.13.0"
+version = "0.14.0"
 description = "Provider-neutral runtime contracts and reusable primitives for AI agents"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
-authors = [
-    {name = "Abdullah Al Rifat"},
-]
+authors = [{name = "Abdullah Al Rifat"}]
 keywords = ["ai", "agent", "llm", "orchestration", "tool-calling", "runtime"]
 dependencies = []
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Typing :: Typed",
+    "Development Status :: 4 - Beta", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent", "Programming Language :: Python", "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13", "Typing :: Typed",
 ]
 
 [project.urls]

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.14.0
+
+### Features
+
+- Add provider-neutral background-process handles and lifecycle states.
+- Add live steering and checkpoint contracts for pause/resume/cancel/redirect/rewind controls.
+- Add deterministic checkpoint identities and a helper for translating real execution observations into Core evidence.
+
+### Architecture
+
+- Keep execution meaning and evidence semantics in Core while leaving process spawning, OS isolation, persistence and provider integrations to consumers.
+- Treat real command and test observations as evidence inputs; model prose remains non-authoritative.
+
 ## 0.13.0
 
 ### Features
@@ -28,38 +41,3 @@
 - Core documentation is standalone and does not depend on or name downstream/private applications.
 
 ### Documentation
-
-- Rewrite the package architecture documentation around standalone reuse.
-- Remove downstream application-specific release instructions from the public Core documentation.
-- Clarify that the PyPI README is generated from the exact release commit.
-
-## 0.11.0
-
-### Features
-
-- Add dependency-free, provider-neutral model contracts for shared agent runtimes.
-- Add `ModelRequest` for normalized completion requests.
-- Add `ModelResponse` for normalized model output and tool calls.
-- Add `ModelUsage` for provider-independent token accounting.
-- Add `ToolCall` for normalized model-requested tool invocations.
-- Add the `ModelProvider` protocol as the stable boundary between shared agent logic and concrete model-provider adapters.
-
-### Architecture
-
-- Keep provider SDKs and concrete integrations outside Core.
-- Preserve Core's dependency-free contract boundary so shared agent behavior remains portable across local and hosted model backends.
-
-### Documentation
-
-- Align the README with the 0.11.0 package version.
-- Document the provider-neutral model contract architecture.
-- Document that the package README is the PyPI project description and therefore documentation changes require a new package version.
-
-## [0.10.0](https://github.com/abdullahalrifat/jarvis-core/compare/jarvis-agent-core-v0.9.5...jarvis-agent-core-v0.10.0) (2026-09-12)
-
-### Highlights
-
-- Added benchmark, policy, resilience, review, verification, execution-proof and sandbox contracts.
-- Added the shared token-efficient agent runtime and provider-neutral subagent proof lineage.
-- Added model routing/calibration, evidence independence, execution verification and release workflow improvements.
-- Added coordinated-release, PyPI Trusted Publishing and automated release lifecycle documentation.
