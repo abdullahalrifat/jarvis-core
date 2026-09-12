@@ -16,10 +16,10 @@ Python 3.10+ is required. Once a release is published to PyPI, install it normal
 python -m pip install jarvis-agent-core
 ```
 
-For a reproducible consumer dependency, pin a specific release:
+For a reproducible consumer dependency, pin a specific published release:
 
 ```bash
-python -m pip install "jarvis-agent-core==0.9.4"
+python -m pip install "jarvis-agent-core==X.Y.Z"
 ```
 
 For development:
@@ -72,7 +72,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md
 
 ## Releases and supply chain
 
-A version bump merged to `main` is validated against the exact commit, built as a wheel and sdist, checked with Twine, smoke-tested in a clean environment, checksummed, provenance-attested and published as a GitHub Release. A separate release-triggered workflow then publishes the exact GitHub Release distributions to PyPI using Trusted Publishing. Existing immutable releases are never replaced.
+A version bump merged to `main` is validated against the exact commit, built as a wheel and sdist, checked with Twine, smoke-tested in a clean environment, checksummed, provenance-attested and published as a GitHub Release. The same release workflow then publishes the exact validated distributions to PyPI using Trusted Publishing. Existing immutable releases are never replaced.
 
 ### Release flow
 
@@ -83,7 +83,6 @@ merge to main
     -> clean-environment install check
     -> SHA-256 checksums + provenance attestation
     -> GitHub Release vX.Y.Z
-    -> release event
     -> PyPI Trusted Publishing
 ```
 
