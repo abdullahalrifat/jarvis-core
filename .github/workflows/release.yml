@@ -3,13 +3,6 @@ name: Release
 on:
   push:
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      publish_pypi:
-        description: Publish to PyPI after creating the GitHub release
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
   group: jarvis-core-release
@@ -133,22 +126,3 @@ jobs:
             --target "$VALIDATED_SHA" \
             --title "Jarvis Core $RELEASE_VERSION" \
             --generate-notes
-
-  publish-pypi:
-    name: Optionally publish to PyPI
-    needs: [validate-and-build, github-release]
-    if: ${{ vars.PUBLISH_PYPI == 'true' || inputs.publish_pypi == true }}
-    runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/project/jarvis-agent-core/
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: python-package-distributions-${{ needs.validate-and-build.outputs.validated_sha }}
-          path: dist/
-      - name: Remove non-package checksum file
-        run: rm dist/SHA256SUMS
-      - uses: pypa/gh-action-pypi-publish@release/v1
