@@ -13,9 +13,7 @@ from jarvis_core.execution_maturity import (
 def test_background_and_steering_contracts():
     handle = ProcessHandle("p1", ("pytest",), pid=42)
     assert handle.status is ProcessStatus.RUNNING
-    assert (
-        SteeringCommand(SteeringAction.CANCEL).action is SteeringAction.CANCEL
-    )
+    assert SteeringCommand(SteeringAction.CANCEL).action is SteeringAction.CANCEL
     checkpoint = Checkpoint("c1", "r1", "before-tests")
     assert checkpoint.run_id == "r1"
     assert checkpoint_digest({"a": 1}) == checkpoint_digest({"a": 1})
