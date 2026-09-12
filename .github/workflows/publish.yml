@@ -56,16 +56,6 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
-      - name: Ensure release tag does not already exist
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.version.outputs.tag }}
-        run: |
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release $TAG already exists; refusing to rebuild or republish it." >&2
-            exit 1
-          fi
-
       - name: Build distributions
         run: python -m build
 
@@ -90,18 +80,23 @@ jobs:
         with:
           subject-path: "dist/*"
 
-      - name: Create immutable GitHub release and tag
+      - name: Create immutable GitHub release and tag if missing
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
           VERSION: ${{ steps.version.outputs.version }}
           MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        shell: bash
         run: |
-          gh release create "$TAG" dist/SHA256SUMS \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$MERGE_SHA" \
-            --title "Jarvis Core $VERSION" \
-            --generate-notes
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; continuing with PyPI publication."
+          else
+            gh release create "$TAG" dist/SHA256SUMS \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$MERGE_SHA" \
+              --title "Jarvis Core $VERSION" \
+              --generate-notes
+          fi
 
       - name: Remove checksum from PyPI payload
         run: rm dist/SHA256SUMS
