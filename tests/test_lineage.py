@@ -20,7 +20,12 @@ def test_child_lineage_binds_parent_and_root() -> None:
 
 
 def test_lineage_proof_is_tamper_evident() -> None:
-    lineage = AgentLineage(task_id="child", parent_task_id="root", root_task_id="root", depth=1)
+    lineage = AgentLineage(
+        task_id="child",
+        parent_task_id="root",
+        root_task_id="root",
+        depth=1,
+    )
     proof = LineageProof(lineage, digest("result"), (digest("evidence"),))
     restored = LineageProof.from_dict(proof.to_dict())
     assert restored.proof_digest == proof.proof_digest
