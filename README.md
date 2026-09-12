@@ -10,10 +10,10 @@
 
 ## Install
 
-Python 3.10+ is required. The current coordinated release is **0.9.5**:
+Python 3.10+ is required. The current Core release is **0.10.1**:
 
 ```bash
-python -m pip install "jarvis-agent-core==0.9.5"
+python -m pip install "jarvis-agent-core==0.10.1"
 ```
 
 For development:
@@ -27,7 +27,7 @@ python -m pytest
 
 ## Capabilities
 
-Core provides typed deterministic contracts/primitives for token accounting, context compaction, artifacts, evidence/verification, model routing/calibration, failure recovery, multi-agent orchestration, instructions/memory, MCP permissions, schedules/remote execution, leases, proof records, citations and evaluation cases. The 0.9.5 line also exposes the shared per-task sandbox policy used by Jarvis and AI Stack Server.
+Core provides typed deterministic contracts/primitives for token accounting, context compaction, artifacts, evidence/verification, model routing/calibration, failure recovery, multi-agent orchestration, instructions/memory, MCP permissions, schedules/remote execution, leases, proof records, citations and evaluation cases. The 0.10.x line also exposes the shared per-task sandbox policy used by Jarvis and AI Stack Server.
 
 Core deliberately does **not** access repositories, execute commands, call model endpoints, start MCP processes, persist product sessions, run cloud workers, enforce tenancy, or approve changes. Jarvis/Server must wire contracts into the real execution path; OS sandbox enforcement remains a consumer/runtime responsibility.
 
@@ -46,11 +46,14 @@ A Core field is not automatically a security control. Consumers must enforce app
 - an existing GitHub Release is never silently replaced;
 - PyPI publication uses GitHub Actions Trusted Publishing; no long-lived PyPI API token is stored in GitHub.
 
-Current coordinated line:
+Current release coordination:
 
-| Core | Jarvis | AI Stack Server | Python |
-| --- | --- | --- | --- |
-| **0.9.5** | **0.9.2** | **0.9.5 consumer** | 3.10+ |
+| Component | Version |
+| --- | --- |
+| Core | **0.10.1** |
+| Jarvis | update to **0.10.1 Core** after the Core release is published |
+| AI Stack Server | update to **0.10.1 Core** after the Core release is published |
+| Python | 3.10+ |
 
 ## Development
 
@@ -66,19 +69,24 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md
 
 ## Releases and supply chain
 
-A version bump merged to `main` is validated against the exact commit, built as a wheel and sdist, checked with Twine, smoke-tested in a clean environment, checksummed, provenance-attested and published as a GitHub Release. The same release workflow then publishes the exact validated distributions to PyPI using Trusted Publishing. Existing immutable releases are never replaced.
+Core releases are versioned explicitly. A version bump merged to `main` is validated against the exact commit, built as a wheel and sdist, checked with Twine, smoke-tested in a clean environment, checksummed, provenance-attested and published as a GitHub Release. The same release workflow then publishes the exact validated distributions to PyPI using Trusted Publishing. Existing immutable releases are never replaced.
 
 ### Release flow
 
 ```text
-merge to main
-    -> validate + test
+version/documentation PR
+    -> CI
+    -> merge to main
+    -> validate exact merged SHA
     -> build wheel/sdist
     -> clean-environment install check
     -> SHA-256 checksums + provenance attestation
     -> GitHub Release vX.Y.Z
     -> PyPI Trusted Publishing
+    -> consumer repositories update their pinned Core version
 ```
+
+For an already-created GitHub release that needs a publication retry, maintainers can use the `workflow_dispatch` input on `.github/workflows/release.yml` and select the immutable release tag. This is for republishing an existing version only; a documentation or code correction must use a new semantic version.
 
 Consumers should depend on the PyPI package rather than a Git checkout or mutable branch. During local development, use an editable install of a checked-out `jarvis-core` repository.
 
