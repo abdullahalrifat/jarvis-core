@@ -1,62 +1,60 @@
-# Jarvis Core contract boundaries
+# Core contract boundaries
 
-`jarvis-agent-core` is the provider-neutral contract library shared by the standalone Jarvis CLI and the optional AI Stack Server. It deliberately does **not** own filesystem tools, subprocess execution, cloud worker processes, durable databases, channel adapters, UI, OS sandbox implementation or provider credentials.
+`jarvis-agent-core` is a standalone, provider-neutral contract and runtime library. It can be embedded by any Python application that needs common agent semantics without taking a dependency on a particular provider SDK, database, deployment platform or user interface.
 
 ## What Core owns
 
-Core v0.8.0 provides stable vocabulary and deterministic primitives for areas such as:
+Core provides stable vocabulary and deterministic primitives for:
 
 - token/context budgets, compaction and artifact references;
 - provider/model capabilities, routing and benchmark observations;
+- provider-neutral model requests, responses, usage and tool calls;
 - evidence, verification and quality contracts;
-- resilience/provider health and failure policy;
+- resilience, provider health and failure policy;
 - multi-agent role/task/result contracts;
 - MCP server/tool permission types;
 - instructions, memory and attachment descriptors;
-- jobs/schedules/remote-run/platform contracts;
+- jobs, schedules, remote-run and platform contracts;
 - execution states and transition validation;
 - lease fencing tokens and attempt ownership vocabulary;
 - proof/evidence ledger types;
 - deterministic permission decisions;
-- conventional cron semantics.
+- reusable sandbox policy and host-boundary validation;
+- evaluation, tracing and review primitives.
 
-## What consumers must enforce
+## What applications must implement
 
-A Core dataclass or helper does not enforce a runtime security boundary by itself. Consumers are responsible for connecting contracts to the real execution path.
+A Core dataclass or helper does not enforce a runtime security boundary by itself. The embedding application is responsible for connecting contracts to the real execution path.
 
 Examples:
 
-- `ToolPermission.requires_approval` must be checked before a CLI/Server MCP call is dispatched;
-- a lease/fencing token must be included in every worker heartbeat/state/completion database predicate;
-- permission decisions must wrap the actual mutation/command/browser/MCP tools;
+- approval requirements must be checked before privileged tools are dispatched;
+- lease/fencing tokens must participate in every persistent worker state predicate;
+- permission decisions must wrap the actual mutation, command, browser or connector tool;
 - proof records must derive from tool/test execution rather than model self-report;
-- provider credentials must remain outside portable cloud task payloads;
-- sandbox/network and workspace-trust decisions are runtime responsibilities, not Core contracts.
+- provider credentials must remain outside portable task payloads;
+- sandbox, network and workspace-trust decisions must be enforced by the host application.
 
-Consumer tests should therefore verify both contract behavior and end-to-end enforcement.
+## Provider boundary
+
+The `ModelProvider` protocol is the stable application boundary. An implementation receives a `ModelRequest` and returns a `ModelResponse`. Core provides normalization helpers but deliberately does not implement HTTP transports or provider SDK clients.
+
+An application may therefore choose any model backend while keeping its agent logic expressed in Core contracts.
 
 ## Trust model
 
-Core treats repository, web, connector and model content as data. It provides policy vocabulary but does not designate repository configuration as trusted. Runtime consumers should keep privilege-granting policy in a user/operator-owned control plane and allow repository configuration only to restrict permissions unless an explicit workspace-trust decision has been made.
+Core treats repository, web, connector and model content as data. It provides policy vocabulary but does not designate external content as trusted. Applications should keep privilege-granting policy in an operator-controlled boundary and treat untrusted content as incapable of expanding permissions.
 
 ## Release ordering
 
-Coordinated releases follow this order:
+1. validate the Core change on the exact commit;
+2. publish the immutable package artifact;
+3. verify the published artifact and checksum;
+4. update embedding applications to the exact released package;
+5. execute application compatibility and integration gates.
 
-1. merge and validate Core contracts;
-2. publish an immutable Core release artifact and checksum;
-3. pin Jarvis and Server to that exact artifact;
-4. execute consumer compatibility/unit/integration/cross-repository gates;
-5. release consumers only after the exact pinned configuration is validated.
-
-The verified Core v0.8.0 wheel SHA-256 is:
-
-```text
-d9569b69385e58a681ea01e900eb81c395d3f202a09a92878eb82bf4d4b8618a
-```
-
-A consumer source tree that imports v0.8 contracts while packaging an older Core wheel is a release defect even if development tests happen to import a checkout.
+A source tree that imports a newer Core API while packaging an older Core wheel is a release defect.
 
 ## Maturity language
 
-Core feature presence should not be interpreted as a claim that Jarvis or Server is production-ready. Runtime maturity requires executable compatibility, malformed-input, timeout/cancellation, permission, recovery and security tests plus retained benchmark evidence. See each consumer repository for its own readiness status.
+Core feature presence is not a production-readiness claim for an embedding application. Production readiness depends on the host application's executable compatibility, malformed-input, timeout/cancellation, permission, recovery and security tests plus retained quality evidence.
