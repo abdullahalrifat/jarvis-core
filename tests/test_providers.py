@@ -19,7 +19,11 @@ def test_provider_contract_is_runtime_implementable() -> None:
             )
 
     provider: ModelProvider = FakeProvider()
-    response = provider.complete(ModelRequest(messages=({"role": "user", "content": "hi"},), max_output_tokens=128))
+    response = provider.complete(
+        ModelRequest(
+            messages=({"role": "user", "content": "hi"},), max_output_tokens=128
+        )
+    )
     assert response.content == "ok"
     assert response.usage.total_tokens == 5
     assert response.tool_calls[0].name == "noop"
