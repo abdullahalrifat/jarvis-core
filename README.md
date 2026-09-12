@@ -56,7 +56,7 @@ Current coordinated line:
 
 | Core | Jarvis | AI Stack Server | Python |
 | --- | --- | --- | --- |
-| **0.9.4** | **0.9.1** | **0.9.3 consumer target** | 3.10+ |
+| **0.9.4 GitHub release / PyPI pending** | **0.9.1** | **0.9.3 consumer target** | 3.10+ |
 
 ## Development
 
