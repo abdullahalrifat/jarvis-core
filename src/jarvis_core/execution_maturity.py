@@ -1,4 +1,5 @@
 """Shared contracts for observable execution, background work and steering."""
+
 from __future__ import annotations
 
 import hashlib
