@@ -1,11 +1,11 @@
 """Shared contracts for observable execution, background work and steering."""
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
-import hashlib
-import json
 
 from .evidence import Evidence, EvidenceLedger
 
@@ -61,11 +61,8 @@ def execution_evidence(
     path: str | None = None,
     verified: bool = True,
 ) -> Evidence:
-    """Record a deterministic observation and return its evidence identity.
-
-    Consumers call this at the boundary where an actual command/test/tool
-    observation becomes trustworthy evidence; model prose never enters here.
-    """
+    """Record a deterministic observation as ledger evidence."""
+    del kind
     digest = None
     if output is not None:
         digest = hashlib.sha256(output.encode("utf-8", errors="replace")).hexdigest()
