@@ -11,9 +11,7 @@ LINEAGE_SCHEMA_VERSION = 1
 
 
 def _digest(payload: Mapping[str, Any]) -> str:
-    encoded = json.dumps(
-        payload, sort_keys=True, separators=(",", ":"), default=str
-    )
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
