@@ -8,10 +8,10 @@ On PyPI, open the `jarvis-agent-core` project and configure a **Trusted Publishe
 
 - **Owner:** `abdullahalrifat`
 - **Repository:** `jarvis-core`
-- **Workflow:** `.github/workflows/release.yml`
+- **Workflow:** `release.yml`
 - **Environment:** `pypi`
 
-The GitHub Actions workflow also declares the same `pypi` environment. Keep the environment name identical on both sides.
+The workflow file lives at `.github/workflows/release.yml`, but PyPI's **Workflow** field accepts the workflow filename only. Keep the environment name identical on both sides.
 
 If the project does not exist on PyPI yet, use PyPI's publishing flow to create the project and add the GitHub trusted publisher before merging the first release that should be published there. Do not add a long-lived PyPI API token to repository secrets.
 
