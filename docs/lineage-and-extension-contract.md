@@ -16,3 +16,7 @@ Future orchestration systems can therefore add parallel subagents, reviewers, re
 ## Boundary
 
 Core owns contracts and verification primitives. Jarvis owns workstation UX/protocol adapters. AI Stack owns durable orchestration, provider routing, GitHub automation, scheduling and tenancy policy.
+
+## CI
+
+The formatting gate uses Black's diff mode so a future formatting regression identifies the exact source transformation required in the CI log.
