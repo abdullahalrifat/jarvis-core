@@ -53,9 +53,7 @@ class TaskSandboxPolicy:
             image=os.getenv(f"{prefix}SANDBOX_IMAGE", "").strip(),
             network=network,
             egress_network=os.getenv(f"{prefix}EGRESS_NETWORK") or None,
-            workspace_read_only=os.getenv(
-                f"{prefix}WORKSPACE_READONLY", "0"
-            ).casefold()
+            workspace_read_only=os.getenv(f"{prefix}WORKSPACE_READONLY", "0").casefold()
             in {"1", "true", "yes"},
             user=os.getenv(f"{prefix}SANDBOX_USER", "65532:65532"),
             seccomp=os.getenv(f"{prefix}SECCOMP", "default"),
