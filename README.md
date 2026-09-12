@@ -6,14 +6,14 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-`jarvis-agent-core` is the small typed dependency-free Python contract/runtime library shared by standalone Jarvis and AI Stack Server. It standardizes portable agent behavior without owning product-specific tools, storage, credentials, deployment policy or OS isolation.
+`jarvis-agent-core` is the small typed, dependency-free Python contract/runtime library shared by standalone Jarvis and AI Stack Server. It standardizes portable agent behavior without owning product-specific tools, storage, credentials, deployment policy, model-provider SDKs, or OS isolation.
 
 ## Install
 
-Python 3.10+ is required. The current Core release is **0.10.1**:
+Python 3.10+ is required. The current Core release is **0.11.0**.
 
 ```bash
-python -m pip install "jarvis-agent-core==0.10.1"
+python -m pip install "jarvis-agent-core==0.11.0"
 ```
 
 For development:
@@ -28,6 +28,35 @@ python -m pytest
 ## Capabilities
 
 Core provides typed deterministic contracts/primitives for token accounting, context compaction, artifacts, evidence/verification, model routing/calibration, failure recovery, multi-agent orchestration, instructions/memory, MCP permissions, schedules/remote execution, leases, proof records, citations and evaluation cases. The 0.10.x line also exposes the shared per-task sandbox policy used by Jarvis and AI Stack Server.
+
+### Provider-neutral model contracts
+
+Core 0.11.0 adds dependency-free contracts for model providers:
+
+- `ModelRequest` describes a provider-independent completion request.
+- `ModelResponse` carries normalized output, tool calls and usage information.
+- `ModelUsage` represents token accounting without depending on a provider SDK.
+- `ToolCall` represents normalized model-requested tool invocation data.
+- `ModelProvider` defines the provider boundary consumed by higher-level runtimes.
+
+These are **contracts, not provider implementations**. Anthropic, Ollama, OpenAI-compatible endpoints, LiteLLM and other concrete integrations belong in consumer/runtime projects. This keeps Core portable and prevents provider SDKs from becoming transitive dependencies of every Jarvis installation.
+
+Conceptually:
+
+```text
+jarvis-core
+    │ provider-neutral contracts
+    ▼
+jarvis
+    │ concrete provider adapters
+    ▼
+ai-stack / external endpoints
+    ├── Ollama
+    ├── LiteLLM
+    └── hosted model APIs
+```
+
+Consumers should depend on the Core contracts rather than importing provider-specific SDK types into shared agent logic.
 
 Core deliberately does **not** access repositories, execute commands, call model endpoints, start MCP processes, persist product sessions, run cloud workers, enforce tenancy, or approve changes. Jarvis/Server must wire contracts into the real execution path; OS sandbox enforcement remains a consumer/runtime responsibility.
 
@@ -50,9 +79,9 @@ Current release coordination:
 
 | Component | Version |
 | --- | --- |
-| Core | **0.10.1** |
-| Jarvis | update to **0.10.1 Core** after the Core release is published |
-| AI Stack Server | update to **0.10.1 Core** after the Core release is published |
+| Core | **0.11.0** |
+| Jarvis | update to **0.11.0 Core** after the Core release is published |
+| AI Stack Server | update to **0.11.0 Core** after the Core release is published |
 | Python | 3.10+ |
 
 ## Development
@@ -71,10 +100,12 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md
 
 Core releases are versioned explicitly. A version bump merged to `main` is validated against the exact commit, built as a wheel and sdist, checked with Twine, smoke-tested in a clean environment, checksummed, provenance-attested and published as a GitHub Release. The same release workflow then publishes the exact validated distributions to PyPI using Trusted Publishing. Existing immutable releases are never replaced.
 
+The package metadata points at `README.md`, so the README from the exact release commit is also used as the PyPI project description. Documentation changes that need to appear on PyPI therefore require a new package version; an existing published release should not be mutated.
+
 ### Release flow
 
 ```text
-version/documentation PR
+version/code/documentation PR
     -> CI
     -> merge to main
     -> validate exact merged SHA
