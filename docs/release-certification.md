@@ -1,6 +1,6 @@
 # Release certification
 
-The current published Core release is **Jarvis Core 0.13.0**.
+The current release documented by this branch is **Jarvis Core 0.15.0**.
 
 ## Contract gates
 

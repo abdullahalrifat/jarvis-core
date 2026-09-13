@@ -12,10 +12,10 @@ The package is designed to be useful **standalone**. Any Python application can 
 
 ## Install
 
-Python 3.10+ is required. The current release is **0.13.0**.
+Python 3.10+ is required. The current release is **0.15.0**.
 
 ```bash
-python -m pip install "jarvis-agent-core==0.13.0"
+python -m pip install "jarvis-agent-core==0.15.0"
 ```
 
 For development:
@@ -26,6 +26,23 @@ cd jarvis-core
 python -m pip install -e . -r requirements-dev.txt
 python -m pytest
 ```
+
+## 0.15.0 highlights
+
+The 0.15.0 release adds provider-neutral primitives for making agent execution more token-efficient and predictable:
+
+- **Context budgets** for bounded prompt/context construction.
+- **Deterministic context compilation** so relevant context can be selected and ordered consistently.
+- **Agent state ledgers** for compact, structured execution state instead of repeatedly replaying large histories.
+- **Token estimation and usage/cost accounting** for requests and accumulated model usage.
+- **Route budgets and adaptive routing** so applications can choose an appropriate model based on remaining budget and task signals.
+- **Failure and command/file state recording** for compact runtime bookkeeping.
+
+These primitives are intentionally provider-neutral. Anthropic, Ollama, Hugging Face, LiteLLM and other provider integrations remain responsibilities of the consuming application. Provider-specific caching metadata, SDK behavior, credentials and transport logic do not belong in Core.
+
+A typical application can use the primitives to keep the agent loop efficient: retrieve only relevant repository context, keep stable state structured and compact, use lightweight/local models for simple work, escalate to stronger models when task signals justify it, and rely on deterministic tools and verification rather than spending model tokens on work the runtime can perform directly.
+
+See [CHANGELOG.md](CHANGELOG.md) for the complete release history.
 
 ## What Core provides
 

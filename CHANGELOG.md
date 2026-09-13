@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.15.0
+
+### Features
+
+- Add token-efficient agent runtime primitives for bounded context and model usage.
+- Add context budgeting across stable instructions, task state, evidence and history.
+- Add deterministic context compilation with deduplication and relevance ranking.
+- Add an agent state ledger for inspected files, executed commands, failures and decisions to avoid repeated work.
+- Add provider-neutral usage and cost accounting, including cache-aware token accounting.
+- Add route budgets and adaptive model routing based on task complexity, risk and uncertainty.
+- Add request token estimation before model execution.
+
+### Architecture
+
+- Keep token-efficiency policy and accounting provider-neutral in Core.
+- Keep provider SDKs, transports, credentials and deployment-specific routing outside Core.
+- Reuse existing context compaction, artifact handling, escalation and reliability primitives instead of duplicating them.
+- Enable consumers to combine deterministic tooling, local models and cloud models while minimizing unnecessary model context.
+
+### Documentation
+
+- Document the token-efficient runtime capabilities and release in the README.
+
 ## 0.14.0
 
 ### Features
@@ -39,5 +62,3 @@
 - Core owns provider-neutral contracts and reusable runtime primitives only.
 - Provider SDKs, HTTP transports, credentials, persistence, user interfaces, deployment and operating-system enforcement remain outside Core.
 - Core documentation is standalone and does not depend on or name downstream/private applications.
-
-### Documentation
