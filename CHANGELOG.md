@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.16.0
+
+### Features
+
+- Centralize empirical route calibration as a provider-neutral Core primitive.
+- Add runtime/benchmark observation metadata for quality, cache usage, source and timestamp.
+- Add 30-day recency weighting, minimum sample safeguards and configurable quality floors.
+- Keep cost, latency, correctness and tool failures in one reusable route utility score.
+- Preserve compatibility with existing route observations and downstream consumers.
+
+### Architecture
+
+- `jarvis-core` owns the reusable calibration algorithm and observation contract.
+- AI Stack owns model execution, provider telemetry and persistence adapters.
+- Jarvis owns real workload definitions and task-level evaluation.
+- Downstream repositories must reuse Core calibration rather than maintain a second routing algorithm.
+
 ## 0.15.0
 
 ### Features

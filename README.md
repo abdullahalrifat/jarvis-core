@@ -12,10 +12,10 @@ The package is designed to be useful **standalone**. Any Python application can 
 
 ## Install
 
-Python 3.10+ is required. The current release is **0.15.0**.
+Python 3.10+ is required. The current release is **0.16.0**.
 
 ```bash
-python -m pip install "jarvis-agent-core==0.15.0"
+python -m pip install "jarvis-agent-core==0.16.0"
 ```
 
 For development:
@@ -27,9 +27,36 @@ python -m pip install -e . -r requirements-dev.txt
 python -m pytest
 ```
 
-## 0.15.0 highlights
+## 0.16.0 highlights
 
-The 0.15.0 release adds provider-neutral primitives for making agent execution more token-efficient and predictable:
+The 0.16.0 release adds provider-neutral empirical route calibration on top of the existing token-efficient runtime primitives:
+
+- **Empirical route observations** capture quality, correctness, latency, token usage, cost, tool failures, cache usage, source and timestamp.
+- **Recency-weighted scoring** gives recent production evidence more influence than stale observations.
+- **Conservative routing safeguards** require a minimum sample count and configurable quality floor before measured evidence can change route selection.
+- **Reusable utility scoring** balances quality and reliability with latency, cost and tool failures.
+- **Backward-compatible observations** allow existing consumers to continue loading older route evidence.
+
+### Calibration ownership
+
+Core is the canonical home for the reusable calibration algorithm. The intended production architecture is:
+
+```text
+Jarvis CLI -> AI Stack -> provider/model
+     │             │
+     └──────┬──────┘
+            ▼
+       jarvis-core
+   contracts + calibration
+```
+
+- **Core:** observation contracts, calibration algorithm, recency weighting, quality safeguards and route utility.
+- **AI Stack:** provider execution, runtime telemetry, persistence and conversion of telemetry into Core observations.
+- **Jarvis:** CLI behavior, real workload definitions and task-level evaluation.
+
+Neither downstream application should implement a second calibration algorithm, and Core must never depend on either downstream application.
+
+The 0.15.0 release added provider-neutral primitives for making agent execution more token-efficient and predictable:
 
 - **Context budgets** for bounded prompt/context construction.
 - **Deterministic context compilation** so relevant context can be selected and ordered consistently.
@@ -50,6 +77,7 @@ Core contains provider-neutral building blocks for:
 
 - model requests, responses, usage and tool calls;
 - provider capability and routing primitives;
+- empirical route calibration and benchmark evidence;
 - agent capabilities and approval decisions;
 - portable sandbox requirements and consumer-owned sandbox executor contracts;
 - token accounting, budgets and context compaction;
@@ -69,44 +97,11 @@ Core contains provider-neutral building blocks for:
 
 Core owns the **meaning** of agent execution: model contracts, tool vocabulary, capabilities, approval semantics, evidence, verification, execution state and portable isolation requirements. Applications own the actual execution adapters.
 
-```text
-                    jarvis-agent-core
-                ┌────────────────────────┐
-                │ Model / tool contracts  │
-                │ Capabilities / approval │
-                │ Execution state / proof │
-                │ Evidence / verification│
-                │ Sandbox requirements   │
-                └───────────┬────────────┘
-                            │
-              ┌─────────────┴──────────────┐
-              │                            │
-       local application             server application
-       CLI / OS sandbox              API / worker / Docker
-```
-
 The Core boundary is deliberately implementation-neutral. A CLI can implement a sandbox with native OS primitives, while a server can implement the same requirements with containers or another isolated worker. Both consume the same policy semantics.
 
 ## Provider-neutral model boundary
 
-Core defines the model boundary but never ships a model-provider SDK.
-
-```text
-Your application
-      │
-      │ implements ModelProvider
-      ▼
-┌──────────────────────────────┐
-│        jarvis-agent-core     │
-│ ModelRequest / Response      │
-│ ModelUsage / ToolCall        │
-│ ModelProvider                │
-│ normalization helpers        │
-│ runtime contracts/primitives │
-└──────────────────────────────┘
-```
-
-Concrete HTTP transports, SDK clients, credentials, endpoint-specific request formatting, retries and provider-specific error handling remain application responsibilities.
+Core defines the model boundary but never ships a model-provider SDK. Concrete HTTP transports, SDK clients, credentials, endpoint-specific request formatting, retries and provider-specific error handling remain application responsibilities.
 
 ## What Core deliberately does not do
 
@@ -131,13 +126,17 @@ This boundary keeps the package portable and safe to embed in different applicat
 - breaking public contracts require a new minor version while the API remains pre-1.0;
 - releases are immutable once published;
 - PyPI publication uses GitHub Actions Trusted Publishing;
-- the package README is the PyPI project description, so documentation changes intended for PyPI require a new package version.
+- the package README is the PyPI project description, so documentation changes intended for PyPI require a new package version;
+- every release-worthy change must update `pyproject.toml`, `CHANGELOG.md`, `README.md` when applicable, and relevant `docs/` files in the same PR;
+- CI enforces that the package version, changelog entry and README current-release/install version stay synchronized.
 
 ### Release flow
 
 ```text
 code/docs change
-    -> CI
+    -> version + CHANGELOG + README/docs
+    -> CI metadata consistency check
+    -> full CI
     -> merge to main
     -> validate exact merged SHA
     -> build wheel + sdist
@@ -152,6 +151,7 @@ Consumers should depend on a published PyPI version rather than a mutable Git br
 ## Development checks
 
 ```bash
+python scripts/check_release_consistency.py
 black --check src tests
 ruff check src tests --select E9,F63,F7,F82
 pytest -q --cov=jarvis_core --cov-report=term-missing --cov-fail-under=85
@@ -159,7 +159,7 @@ python -m build
 python -m twine check dist/*
 ```
 
-See [docs/contract-boundaries.md](docs/contract-boundaries.md), [docs/releasing.md](docs/releasing.md), [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+See [docs/contract-boundaries.md](docs/contract-boundaries.md), [docs/empirical-calibration.md](docs/empirical-calibration.md), [docs/releasing.md](docs/releasing.md), [CONTRIBUTING.md](CONTRIBUTING.md), [AGENTS.md](AGENTS.md) and [SECURITY.md](SECURITY.md).
 
 ## License
 
