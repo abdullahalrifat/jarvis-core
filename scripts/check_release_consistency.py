@@ -33,7 +33,7 @@ def main() -> None:
             f"expected {version}"
         )
 
-    install_pin = f'jarvis-agent-core=={version}'
+    install_pin = f"jarvis-agent-core=={version}"
     if install_pin not in readme:
         raise SystemExit(f"README.md is missing the pinned install version {version}")
 
