@@ -1,4 +1,11 @@
-from jarvis_core.efficiency import AgentState, ContextBudget, ModelPricing, RouteBudget, build_context, choose_route
+from jarvis_core.efficiency import (
+    AgentState,
+    ContextBudget,
+    ModelPricing,
+    RouteBudget,
+    build_context,
+    choose_route,
+)
 from jarvis_core.quality import Scope, TaskAnalysis
 from jarvis_core.reliability import ContextItem
 
@@ -17,14 +24,27 @@ def test_context_budget_and_deduplication():
         ContextItem.build("file", "duplicate", "important", relevance=0.1),
         ContextItem.build("file", "b", "other " * 100, relevance=0.5),
     ]
-    budget = ContextBudget(total_tokens=256, stable_tokens=64, state_tokens=64, evidence_tokens=64, history_tokens=64)
+    budget = ContextBudget(
+        total_tokens=256,
+        stable_tokens=64,
+        state_tokens=64,
+        evidence_tokens=64,
+        history_tokens=64,
+    )
     result = build_context(items, budget=budget)
     assert result.compiled.total_tokens <= 256
     assert len(result.compiled.items) == 2
 
 
 def test_model_pricing_and_route_budget():
-    assert ModelPricing(2, 10, 0.2).cost(input_tokens=10000, cached_input_tokens=8000, output_tokens=1000) == 0.0156
+    assert (
+        ModelPricing(2, 10, 0.2).cost(
+            input_tokens=10000,
+            cached_input_tokens=8000,
+            output_tokens=1000,
+        )
+        == 0.0156
+    )
     budget = RouteBudget(1.0)
     assert budget.permits(1.0)
     assert not budget.after(0.75).permits(0.30)
