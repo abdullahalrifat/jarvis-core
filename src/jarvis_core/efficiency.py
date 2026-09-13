@@ -7,7 +7,12 @@ from typing import Any, Iterable, Mapping
 
 from .context import compact_messages
 from .quality import TaskAnalysis
-from .reliability import ContextItem, CompiledContext, compile_context, escalation_policy
+from .reliability import (
+    ContextItem,
+    CompiledContext,
+    compile_context,
+    escalation_policy,
+)
 from .tokens import Usage, estimate_tokens
 
 
@@ -20,8 +25,14 @@ class ModelPricing:
     cached_input_per_million: float = 0.0
     cache_write_per_million: float = 0.0
 
-    def cost(self, *, input_tokens: int = 0, output_tokens: int = 0,
-             cached_input_tokens: int = 0, cache_write_tokens: int = 0) -> float:
+    def cost(
+        self,
+        *,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+        cached_input_tokens: int = 0,
+        cache_write_tokens: int = 0,
+    ) -> float:
         uncached = max(0, input_tokens - cached_input_tokens)
         return (
             uncached * self.input_per_million
@@ -56,8 +67,13 @@ class ContextBudget:
     history_tokens: int = 4_000
 
     def __post_init__(self) -> None:
-        values = (self.total_tokens, self.stable_tokens, self.state_tokens,
-                  self.evidence_tokens, self.history_tokens)
+        values = (
+            self.total_tokens,
+            self.stable_tokens,
+            self.state_tokens,
+            self.evidence_tokens,
+            self.history_tokens,
+        )
         if min(values) < 0 or sum(values[1:]) > self.total_tokens:
             raise ValueError("invalid context token budgets")
 
@@ -95,11 +111,16 @@ class AgentState:
 
     def as_context(self) -> str:
         return (
-            "Already inspected files: " + ", ".join(sorted(self.inspected_files))
-            + "\nAlready executed commands: " + ", ".join(sorted(self.executed_commands))
-            + "\nKnown failure fingerprints: " + ", ".join(sorted(self.failed_fingerprints))
-            + "\nDecisions: " + " | ".join(self.decisions[-8:])
-            + "\nObservations: " + " | ".join(self.observations[-8:])
+            "Already inspected files: "
+            + ", ".join(sorted(self.inspected_files))
+            + "\nAlready executed commands: "
+            + ", ".join(sorted(self.executed_commands))
+            + "\nKnown failure fingerprints: "
+            + ", ".join(sorted(self.failed_fingerprints))
+            + "\nDecisions: "
+            + " | ".join(self.decisions[-8:])
+            + "\nObservations: "
+            + " | ".join(self.observations[-8:])
         )
 
 
@@ -116,9 +137,13 @@ class CompiledAgentContext:
         return self.compiled.total_tokens
 
 
-def build_context(items: Iterable[ContextItem], *, budget: ContextBudget | None = None,
-                  messages: list[dict[str, Any]] | None = None,
-                  keep_recent: int = 4) -> CompiledAgentContext:
+def build_context(
+    items: Iterable[ContextItem],
+    *,
+    budget: ContextBudget | None = None,
+    messages: list[dict[str, Any]] | None = None,
+    keep_recent: int = 4,
+) -> CompiledAgentContext:
     """Deduplicate/rank context and compact old messages before model invocation."""
     budget = budget or ContextBudget()
     compiled = compile_context(items, budget.total_tokens)
@@ -126,16 +151,25 @@ def build_context(items: Iterable[ContextItem], *, budget: ContextBudget | None 
     saved = 0
     if compacted:
         compacted, saved = compact_messages(
-            compacted, keep_recent=keep_recent,
+            compacted,
+            keep_recent=keep_recent,
             max_summary_chars=max(1024, budget.state_tokens * 4),
         )
     return CompiledAgentContext(compiled, tuple(compacted), saved)
 
 
-def estimate_request_tokens(*, task: str, context: CompiledAgentContext,
-                            tools: Iterable[Mapping[str, Any]] = ()) -> int:
-    """Estimate the complete request, including compiled context and tool schemas."""
-    return estimate_tokens(task) + estimate_tokens(context.compiled.render()) + estimate_tokens(list(tools))
+def estimate_request_tokens(
+    *,
+    task: str,
+    context: CompiledAgentContext,
+    tools: Iterable[Mapping[str, Any]] = (),
+) -> int:
+    """Estimate the complete request, including context and tool schemas."""
+    return (
+        estimate_tokens(task)
+        + estimate_tokens(context.compiled.render())
+        + estimate_tokens(list(tools))
+    )
 
 
 def estimate_usage_cost(usage: Usage, pricing: ModelPricing) -> float:
@@ -146,13 +180,20 @@ def estimate_usage_cost(usage: Usage, pricing: ModelPricing) -> float:
     )
 
 
-def choose_route(analysis: TaskAnalysis, *, uncertainty: float = 0.0,
-                 tool_failures: int = 0, conflicting_evidence: bool = False,
-                 retrieval_confidence: float = 1.0) -> str:
+def choose_route(
+    analysis: TaskAnalysis,
+    *,
+    uncertainty: float = 0.0,
+    tool_failures: int = 0,
+    conflicting_evidence: bool = False,
+    retrieval_confidence: float = 1.0,
+) -> str:
     """Return cheap/strong/expert without coupling Core to a model vendor."""
     return escalation_policy(
-        complexity=analysis.complexity, uncertainty=uncertainty,
-        risk=analysis.risk, tool_failures=tool_failures,
+        complexity=analysis.complexity,
+        uncertainty=uncertainty,
+        risk=analysis.risk,
+        tool_failures=tool_failures,
         conflicting_evidence=conflicting_evidence,
         retrieval_confidence=retrieval_confidence,
     ).tier
