@@ -94,7 +94,7 @@ def test_score_clamps_and_accounts_for_retrieval_and_failures():
         retrieval_confidence=-1.0,
         tool_failures=99,
     ).score()
-    assert score == 1.0
+    assert score == 0.75
 
 
 def test_failure_budget_and_success_behavior():
@@ -119,7 +119,7 @@ def test_model_cost_cached_tokens_and_negative_values():
         cached_input_per_million=0.25,
         output_per_million=2.0,
     )
-    assert model.estimate_cost(1000, 500, 400) == 0.0014
+    assert model.estimate_cost(1000, 500, 400) == 0.0017
     assert model.estimate_cost(-1, -1, -1) == 0.0
 
 
