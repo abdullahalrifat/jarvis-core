@@ -1,7 +1,7 @@
 """Deterministic cost-aware routing for local-first agent execution.
 
-This module contains no provider SDKs.  It decides *which tier* should handle a
-turn; the application maps tiers to concrete model profiles.  The policy is
+This module contains no provider SDKs. It decides which tier should handle a
+turn; the application maps tiers to concrete model profiles. The policy is
 intentionally conservative: deterministic tools remain outside the model path,
 local inference is the default, and repeated failures trigger escalation.
 """
@@ -28,7 +28,9 @@ class RouteModel:
     enabled: bool = True
     priority: int = 0
 
-    def estimate_cost(self, input_tokens: int, output_tokens: int, cached_tokens: int = 0) -> float:
+    def estimate_cost(
+        self, input_tokens: int, output_tokens: int, cached_tokens: int = 0
+    ) -> float:
         uncached = max(0, input_tokens - cached_tokens)
         return (
             uncached * self.input_per_million
@@ -79,7 +81,11 @@ class FailureBudget:
     frontier: int = 3
 
     def limit(self, tier: RouteTier) -> int:
-        return {RouteTier.LOCAL: self.local, RouteTier.CHEAP: self.cheap, RouteTier.FRONTIER: self.frontier}[tier]
+        return {
+            RouteTier.LOCAL: self.local,
+            RouteTier.CHEAP: self.cheap,
+            RouteTier.FRONTIER: self.frontier,
+        }[tier]
 
 
 def _clamp(value: float) -> float:
@@ -89,17 +95,34 @@ def _clamp(value: float) -> float:
 def choose_tier(signals: RoutingSignals) -> RoutingDecision:
     """Choose the minimum-cost tier that has enough evidence to proceed."""
     if signals.deterministic_only:
-        return RoutingDecision(RouteTier.LOCAL, "deterministic work should bypass the LLM", 0, False)
+        return RoutingDecision(
+            RouteTier.LOCAL, "deterministic work should bypass the LLM", 0, False
+        )
 
     score = signals.score()
-    if signals.security_sensitive or signals.attempts >= 2 and signals.tool_failures >= 2:
-        return RoutingDecision(RouteTier.FRONTIER, "high-risk or repeated execution failure", 3, True)
+    if (
+        signals.security_sensitive
+        or signals.attempts >= 2
+        and signals.tool_failures >= 2
+    ):
+        return RoutingDecision(
+            RouteTier.FRONTIER, "high-risk or repeated execution failure", 3, True
+        )
     if score >= 0.72 or signals.attempts >= 2 or signals.tool_failures >= 2:
-        return RoutingDecision(RouteTier.CHEAP, "moderate/high difficulty or local failure budget reached", 2, signals.risk >= 0.55)
-    return RoutingDecision(RouteTier.LOCAL, "local-first policy", 2, signals.risk >= 0.65)
+        return RoutingDecision(
+            RouteTier.CHEAP,
+            "moderate/high difficulty or local failure budget reached",
+            2,
+            signals.risk >= 0.55,
+        )
+    return RoutingDecision(
+        RouteTier.LOCAL, "local-first policy", 2, signals.risk >= 0.65
+    )
 
 
-def next_tier(current: RouteTier, *, success: bool, budget: FailureBudget, attempts: int) -> RouteTier | None:
+def next_tier(
+    current: RouteTier, *, success: bool, budget: FailureBudget, attempts: int
+) -> RouteTier | None:
     """Return the next tier only after failure budget is exhausted."""
     if success or attempts < budget.limit(current):
         return current
@@ -122,7 +145,19 @@ def select_model(
     """Select an enabled model in a tier, preferring low cost then priority."""
     candidates = [m for m in models if m.enabled and m.tier == tier]
     if max_cost_usd is not None:
-        candidates = [m for m in candidates if m.estimate_cost(input_tokens, output_tokens, cached_tokens) <= max_cost_usd]
+        candidates = [
+            m
+            for m in candidates
+            if m.estimate_cost(input_tokens, output_tokens, cached_tokens)
+            <= max_cost_usd
+        ]
     if not candidates:
         raise LookupError(f"no enabled model available for tier: {tier.name.lower()}")
-    return min(candidates, key=lambda m: (m.estimate_cost(input_tokens, output_tokens, cached_tokens), -m.priority, m.name))
+    return min(
+        candidates,
+        key=lambda m: (
+            m.estimate_cost(input_tokens, output_tokens, cached_tokens),
+            -m.priority,
+            m.name,
+        ),
+    )
