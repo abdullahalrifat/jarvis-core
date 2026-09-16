@@ -107,8 +107,7 @@ def test_failure_budget_and_success_behavior():
         is RouteTier.LOCAL
     )
     assert (
-        next_tier(RouteTier.FRONTIER, success=False, budget=budget, attempts=3)
-        is None
+        next_tier(RouteTier.FRONTIER, success=False, budget=budget, attempts=3) is None
     )
 
 
@@ -126,12 +125,8 @@ def test_model_cost_cached_tokens_and_negative_values():
 
 def test_model_selection_honors_enabled_budget_and_priority():
     models = (
-        RouteModel(
-            "disabled", RouteTier.CHEAP, input_per_million=0, enabled=False
-        ),
-        RouteModel(
-            "expensive", RouteTier.CHEAP, input_per_million=2, priority=10
-        ),
+        RouteModel("disabled", RouteTier.CHEAP, input_per_million=0, enabled=False),
+        RouteModel("expensive", RouteTier.CHEAP, input_per_million=2, priority=10),
         RouteModel("cheap", RouteTier.CHEAP, input_per_million=1, priority=0),
         RouteModel(
             "same-cost-priority", RouteTier.CHEAP, input_per_million=1, priority=5
