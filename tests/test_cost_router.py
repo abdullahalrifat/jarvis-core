@@ -27,16 +27,31 @@ def test_security_work_uses_frontier():
 
 def test_failure_budget_escalates_only_after_limit():
     budget = FailureBudget(local=2, cheap=2)
-    assert next_tier(RouteTier.LOCAL, success=False, budget=budget, attempts=1) is RouteTier.LOCAL
-    assert next_tier(RouteTier.LOCAL, success=False, budget=budget, attempts=2) is RouteTier.CHEAP
-    assert next_tier(RouteTier.CHEAP, success=False, budget=budget, attempts=2) is RouteTier.FRONTIER
+    assert (
+        next_tier(RouteTier.LOCAL, success=False, budget=budget, attempts=1)
+        is RouteTier.LOCAL
+    )
+    assert (
+        next_tier(RouteTier.LOCAL, success=False, budget=budget, attempts=2)
+        is RouteTier.CHEAP
+    )
+    assert (
+        next_tier(RouteTier.CHEAP, success=False, budget=budget, attempts=2)
+        is RouteTier.FRONTIER
+    )
 
 
 def test_model_selection_prefers_cheapest_route():
     models = (
         RouteModel("local", RouteTier.LOCAL),
-        RouteModel("cloud-a", RouteTier.CHEAP, input_per_million=1, output_per_million=2),
-        RouteModel("cloud-b", RouteTier.CHEAP, input_per_million=0.5, output_per_million=1),
+        RouteModel(
+            "cloud-a", RouteTier.CHEAP, input_per_million=1, output_per_million=2
+        ),
+        RouteModel(
+            "cloud-b", RouteTier.CHEAP, input_per_million=0.5, output_per_million=1
+        ),
     )
-    selected = select_model(models, RouteTier.CHEAP, input_tokens=1000, output_tokens=1000)
+    selected = select_model(
+        models, RouteTier.CHEAP, input_tokens=1000, output_tokens=1000
+    )
     assert selected.name == "cloud-b"
