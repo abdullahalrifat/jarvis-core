@@ -28,9 +28,7 @@ class RouteModel:
     enabled: bool = True
     priority: int = 0
 
-    def estimate_cost(
-        self, input_tokens: int, output_tokens: int, cached_tokens: int = 0
-    ) -> float:
+    def estimate_cost(self, input_tokens: int, output_tokens: int, cached_tokens: int = 0) -> float:
         uncached = max(0, input_tokens - cached_tokens)
         return (
             uncached * self.input_per_million
@@ -100,10 +98,8 @@ def choose_tier(signals: RoutingSignals) -> RoutingDecision:
         )
 
     score = signals.score()
-    if (
-        signals.security_sensitive
-        or signals.attempts >= 2
-        and signals.tool_failures >= 2
+    if signals.security_sensitive or (
+        signals.attempts >= 2 and signals.tool_failures >= 2
     ):
         return RoutingDecision(
             RouteTier.FRONTIER, "high-risk or repeated execution failure", 3, True
@@ -120,9 +116,7 @@ def choose_tier(signals: RoutingSignals) -> RoutingDecision:
     )
 
 
-def next_tier(
-    current: RouteTier, *, success: bool, budget: FailureBudget, attempts: int
-) -> RouteTier | None:
+def next_tier(current: RouteTier, *, success: bool, budget: FailureBudget, attempts: int) -> RouteTier | None:
     """Return the next tier only after failure budget is exhausted."""
     if success or attempts < budget.limit(current):
         return current
@@ -148,8 +142,7 @@ def select_model(
         candidates = [
             m
             for m in candidates
-            if m.estimate_cost(input_tokens, output_tokens, cached_tokens)
-            <= max_cost_usd
+            if m.estimate_cost(input_tokens, output_tokens, cached_tokens) <= max_cost_usd
         ]
     if not candidates:
         raise LookupError(f"no enabled model available for tier: {tier.name.lower()}")
