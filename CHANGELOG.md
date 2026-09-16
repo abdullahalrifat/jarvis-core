@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.16.1
+
+### Features
+
+- Add provider-neutral cost-aware local/cheap/frontier tier routing.
+- Add bounded failure-budget escalation from local to cheap and frontier tiers.
+- Add cheapest eligible model selection using input, cached-input and output cost estimates.
+- Add verification requirements for elevated-risk and security-sensitive routing decisions.
+- Keep provider SDKs, credentials, pricing configuration and execution adapters outside Core.
+
+### Documentation
+
+- Document the local-first hybrid routing policy and tier ownership.
+- Align README and PyPI project documentation with the new routing primitives.
+
+### Maintenance
+
+- Format the new routing implementation and tests with the repository's Black configuration.
+- Bump the package version to 0.16.1.
+
 ## 0.16.0
 
 ### Features
@@ -50,7 +70,7 @@
 
 ### Architecture
 
-- Keep execution meaning and evidence semantics in Core while leaving process spawning, OS isolation, persistence and provider integrations to consumers.
+- Keep execution meaning and evidence semantics in Core while leaving process spawning, OS isolation, persistence and provider integrations to Core consumers.
 - Treat real command and test observations as evidence inputs; model prose remains non-authoritative.
 
 ## 0.13.0
