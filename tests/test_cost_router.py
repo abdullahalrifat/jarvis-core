@@ -72,13 +72,7 @@ def test_repeated_failures_escalate_to_frontier():
 
 
 def test_score_clamps_and_accounts_for_retrieval_and_failures():
-    score = RoutingSignals(
-        complexity=2.0,
-        uncertainty=-1.0,
-        risk=2.0,
-        retrieval_confidence=-1.0,
-        tool_failures=99,
-    ).score()
+    score = RoutingSignals(complexity=2.0, uncertainty=-1.0, risk=2.0, retrieval_confidence=-1.0, tool_failures=99).score()
     assert score == 1.0
 
 
@@ -92,13 +86,7 @@ def test_failure_budget_and_success_behavior():
 
 
 def test_model_cost_cached_tokens_and_negative_values():
-    model = RouteModel(
-        "cached",
-        RouteTier.CHEAP,
-        input_per_million=1.0,
-        cached_input_per_million=0.25,
-        output_per_million=2.0,
-    )
+    model = RouteModel("cached", RouteTier.CHEAP, input_per_million=1.0, cached_input_per_million=0.25, output_per_million=2.0)
     assert model.estimate_cost(1000, 500, 400) == 0.0014
     assert model.estimate_cost(-1, -1, -1) == 0.0
 
@@ -123,12 +111,7 @@ def test_model_selection_raises_when_no_model_matches():
         raise AssertionError("expected LookupError")
 
     try:
-        select_model(
-            (RouteModel("too-expensive", RouteTier.CHEAP, input_per_million=2),),
-            RouteTier.CHEAP,
-            input_tokens=1000,
-            max_cost_usd=0.001,
-        )
+        select_model((RouteModel("too-expensive", RouteTier.CHEAP, input_per_million=2),), RouteTier.CHEAP, input_tokens=1000, max_cost_usd=0.001)
     except LookupError:
         pass
     else:
