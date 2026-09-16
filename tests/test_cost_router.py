@@ -27,18 +27,33 @@ def test_security_work_uses_frontier():
 
 def test_failure_budget_escalates_only_after_limit():
     budget = FailureBudget(local=2, cheap=2)
-    assert next_tier(RouteTier.LOCAL, success=False, budget=budget, attempts=1) is RouteTier.LOCAL
-    assert next_tier(RouteTier.LOCAL, success=False, budget=budget, attempts=2) is RouteTier.CHEAP
-    assert next_tier(RouteTier.CHEAP, success=False, budget=budget, attempts=2) is RouteTier.FRONTIER
+    assert (
+        next_tier(RouteTier.LOCAL, success=False, budget=budget, attempts=1)
+        is RouteTier.LOCAL
+    )
+    assert (
+        next_tier(RouteTier.LOCAL, success=False, budget=budget, attempts=2)
+        is RouteTier.CHEAP
+    )
+    assert (
+        next_tier(RouteTier.CHEAP, success=False, budget=budget, attempts=2)
+        is RouteTier.FRONTIER
+    )
 
 
 def test_model_selection_prefers_cheapest_route():
     models = (
         RouteModel("local", RouteTier.LOCAL),
-        RouteModel("cloud-a", RouteTier.CHEAP, input_per_million=1, output_per_million=2),
-        RouteModel("cloud-b", RouteTier.CHEAP, input_per_million=0.5, output_per_million=1),
+        RouteModel(
+            "cloud-a", RouteTier.CHEAP, input_per_million=1, output_per_million=2
+        ),
+        RouteModel(
+            "cloud-b", RouteTier.CHEAP, input_per_million=0.5, output_per_million=1
+        ),
     )
-    selected = select_model(models, RouteTier.CHEAP, input_tokens=1000, output_tokens=1000)
+    selected = select_model(
+        models, RouteTier.CHEAP, input_tokens=1000, output_tokens=1000
+    )
     assert selected.name == "cloud-b"
 
 
@@ -72,7 +87,13 @@ def test_repeated_failures_escalate_to_frontier():
 
 
 def test_score_clamps_and_accounts_for_retrieval_and_failures():
-    score = RoutingSignals(complexity=2.0, uncertainty=-1.0, risk=2.0, retrieval_confidence=-1.0, tool_failures=99).score()
+    score = RoutingSignals(
+        complexity=2.0,
+        uncertainty=-1.0,
+        risk=2.0,
+        retrieval_confidence=-1.0,
+        tool_failures=99,
+    ).score()
     assert score == 1.0
 
 
@@ -81,24 +102,44 @@ def test_failure_budget_and_success_behavior():
     assert budget.limit(RouteTier.LOCAL) == 2
     assert budget.limit(RouteTier.CHEAP) == 2
     assert budget.limit(RouteTier.FRONTIER) == 3
-    assert next_tier(RouteTier.LOCAL, success=True, budget=budget, attempts=99) is RouteTier.LOCAL
-    assert next_tier(RouteTier.FRONTIER, success=False, budget=budget, attempts=3) is None
+    assert (
+        next_tier(RouteTier.LOCAL, success=True, budget=budget, attempts=99)
+        is RouteTier.LOCAL
+    )
+    assert (
+        next_tier(RouteTier.FRONTIER, success=False, budget=budget, attempts=3)
+        is None
+    )
 
 
 def test_model_cost_cached_tokens_and_negative_values():
-    model = RouteModel("cached", RouteTier.CHEAP, input_per_million=1.0, cached_input_per_million=0.25, output_per_million=2.0)
+    model = RouteModel(
+        "cached",
+        RouteTier.CHEAP,
+        input_per_million=1.0,
+        cached_input_per_million=0.25,
+        output_per_million=2.0,
+    )
     assert model.estimate_cost(1000, 500, 400) == 0.0014
     assert model.estimate_cost(-1, -1, -1) == 0.0
 
 
 def test_model_selection_honors_enabled_budget_and_priority():
     models = (
-        RouteModel("disabled", RouteTier.CHEAP, input_per_million=0, enabled=False),
-        RouteModel("expensive", RouteTier.CHEAP, input_per_million=2, priority=10),
+        RouteModel(
+            "disabled", RouteTier.CHEAP, input_per_million=0, enabled=False
+        ),
+        RouteModel(
+            "expensive", RouteTier.CHEAP, input_per_million=2, priority=10
+        ),
         RouteModel("cheap", RouteTier.CHEAP, input_per_million=1, priority=0),
-        RouteModel("same-cost-priority", RouteTier.CHEAP, input_per_million=1, priority=5),
+        RouteModel(
+            "same-cost-priority", RouteTier.CHEAP, input_per_million=1, priority=5
+        ),
     )
-    selected = select_model(models, RouteTier.CHEAP, input_tokens=1000, max_cost_usd=0.001)
+    selected = select_model(
+        models, RouteTier.CHEAP, input_tokens=1000, max_cost_usd=0.001
+    )
     assert selected.name == "same-cost-priority"
 
 
@@ -111,7 +152,18 @@ def test_model_selection_raises_when_no_model_matches():
         raise AssertionError("expected LookupError")
 
     try:
-        select_model((RouteModel("too-expensive", RouteTier.CHEAP, input_per_million=2),), RouteTier.CHEAP, input_tokens=1000, max_cost_usd=0.001)
+        select_model(
+            (
+                RouteModel(
+                    "too-expensive",
+                    RouteTier.CHEAP,
+                    input_per_million=2,
+                ),
+            ),
+            RouteTier.CHEAP,
+            input_tokens=1000,
+            max_cost_usd=0.001,
+        )
     except LookupError:
         pass
     else:
