@@ -1,4 +1,9 @@
-"""Model capability profiles and deterministic task routing."""
+"""Model capability profiles and deterministic task routing.
+
+The  attribute defaults to  at the class level; individual
+model profiles may set it to  when loading from configuration (see
+:py:func:).
+"""
 
 from __future__ import annotations
 
