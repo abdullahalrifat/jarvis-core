@@ -41,7 +41,7 @@ where prices are supplied per million tokens.
 
 Core only decides the abstract tier and model-selection policy. The consuming application is responsible for mapping tiers to actual Ollama, Hugging Face, LiteLLM, Anthropic, OpenAI or other provider models, loading pricing metadata, executing requests and recording telemetry.
 
-For a 16 GB CPU-only personal server, keep the local tier populated with the available Ollama aliases and leave cloud tiers empty unless remote providers are intentionally configured. This preserves local-first behavior while retaining a controlled escalation path.
+For a CPU-only personal server, the consuming application should map the local tier to concrete model IDs actually provisioned by its inference service (for example `qwen3:1.7b` and `qwen3:4b`). Core does not own model aliases, runtime URLs or provider credentials.
 
 ## API
 
