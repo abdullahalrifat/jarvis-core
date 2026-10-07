@@ -181,3 +181,7 @@ See [docs/contract-boundaries.md](docs/contract-boundaries.md), [docs/cost-aware
 ## License
 
 Jarvis Core is available under the [MIT License](LICENSE).
+
+## Compatibility
+
+The package now also exposes pure compatibility-report helpers so consuming applications can fail CI/startup on exact Core contract drift without introducing provider or deployment dependencies.
