@@ -86,27 +86,3 @@ class ScheduleSpec:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
-
-
-AGENT_PROTOCOL_VERSION = 1
-INFERENCE_PROTOCOL_VERSION = 1
-EVENT_SCHEMA_VERSION = 1
-
-
-@dataclass(frozen=True)
-class ProtocolRange:
-    minimum: int
-    maximum: int
-
-    def supports(self, version: int) -> bool:
-        return self.minimum <= version <= self.maximum
-
-    def overlaps(self, other: "ProtocolRange") -> bool:
-        return max(self.minimum, other.minimum) <= min(self.maximum, other.maximum)
-
-
-def require_features(capabilities: dict[str, Any], required: tuple[str, ...]) -> None:
-    advertised = {str(item) for item in capabilities.get("features", [])}
-    missing = sorted(set(required) - advertised)
-    if missing:
-        raise ValueError("Missing required capabilities: " + ", ".join(missing))

@@ -80,7 +80,6 @@ def test_eval_scoring_reports_missing_and_forbidden_content():
     assert len(result.failures) == 2
 
 
-
 def test_protocol_compatibility_contracts():
     from jarvis_core import (
         AGENT_PROTOCOL_VERSION,
