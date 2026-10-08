@@ -12,10 +12,10 @@ The package is designed to be useful **standalone**. Any Python application can 
 
 ## Install
 
-Python 3.10+ is required. The current release is **0.16.1**.
+Python 3.10+ is required. The current release is **0.16.2**.
 
 ```bash
-python -m pip install "jarvis-agent-core==0.16.1"
+python -m pip install "jarvis-agent-core==0.16.2"
 ```
 
 For development:
@@ -27,9 +27,9 @@ python -m pip install -e . -r requirements-dev.txt
 python -m pytest
 ```
 
-## 0.16.1 highlights
+## 0.16.2 highlights
 
-The 0.16.1 release adds the cost-aware local-first routing layer and keeps the previous empirical calibration and token-efficiency primitives intact:
+The 0.16.2 release adds the cost-aware local-first routing layer and keeps the previous empirical calibration and token-efficiency primitives intact:
 
 - **Cost-aware tier routing** chooses between local, cheap-cloud and frontier tiers using deterministic task signals.
 - **Bounded escalation** prevents repeated failures from creating unbounded model retries and escalates only after the configured tier budget is exhausted.
