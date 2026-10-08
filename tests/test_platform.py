@@ -78,7 +78,7 @@ def test_eval_scoring_reports_missing_and_forbidden_content():
     assert not result.passed
     assert result.score == 0.0
     assert len(result.failures) == 2
-\n\nfrom jarvis_core import (\n    AGENT_PROTOCOL_VERSION,\n    EVENT_SCHEMA_VERSION,\n    INFERENCE_PROTOCOL_VERSION,\n    ProtocolRange,\n    compatible,\n    require_features,\n)\n\n\ndef test_protocol_ranges_and_features():\n    assert AGENT_PROTOCOL_VERSION == 1\n    assert INFERENCE_PROTOCOL_VERSION == 1\n    assert EVENT_SCHEMA_VERSION == 1\n    assert compatible(ProtocolRange(1, 2), ProtocolRange(2, 3))\n    assert not compatible(ProtocolRange(1, 1), ProtocolRange(2, 3))\n    require_features({"features": ["chat", "embeddings"]}, ["chat"])\n
+\n
 
 
 def test_protocol_compatibility_contracts():
