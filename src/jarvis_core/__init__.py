@@ -307,3 +307,11 @@ __all__ = [
     "SandboxExecutor",
     "SandboxRequirements",
 ]
+
+from .contracts import (
+    AGENT_PROTOCOL_VERSION,
+    EVENT_SCHEMA_VERSION,
+    INFERENCE_PROTOCOL_VERSION,
+    ProtocolRange,
+    require_features,
+)
