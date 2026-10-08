@@ -92,6 +92,7 @@ AGENT_PROTOCOL_VERSION = 1
 INFERENCE_PROTOCOL_VERSION = 1
 EVENT_SCHEMA_VERSION = 1
 
+
 @dataclass(frozen=True)
 class ProtocolRange:
     minimum: int
