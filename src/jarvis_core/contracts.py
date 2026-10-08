@@ -24,6 +24,9 @@ class ProtocolRange:
     def supports(self, version: int) -> bool:
         return self.minimum <= version <= self.maximum
 
+    def overlaps(self, other: "ProtocolRange") -> bool:
+        return max(self.minimum, other.minimum) <= min(self.maximum, other.maximum)
+
 
 @dataclass(frozen=True)
 class CapabilityDescriptor:
