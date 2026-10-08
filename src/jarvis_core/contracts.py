@@ -59,6 +59,4 @@ def require_features(
     advertised = {str(item) for item in capabilities.get("features", [])}
     missing = sorted(set(required) - advertised)
     if missing:
-        raise ValueError(
-            "Missing required capabilities: " + ", ".join(missing)
-        )
+        raise ValueError("Missing required capabilities: " + ", ".join(missing))
