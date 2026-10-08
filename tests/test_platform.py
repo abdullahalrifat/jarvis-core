@@ -78,7 +78,7 @@ def test_eval_scoring_reports_missing_and_forbidden_content():
     assert not result.passed
     assert result.score == 0.0
     assert len(result.failures) == 2
-\n
+
 
 
 def test_protocol_compatibility_contracts():
