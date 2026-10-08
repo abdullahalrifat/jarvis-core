@@ -56,7 +56,12 @@ def require_features(
 ) -> None:
     """Raise ValueError when advertised capabilities do not cover requirements."""
 
-    advertised = {str(item) for item in capabilities.get("features", [])}
+    raw_features = capabilities.get("features", ())
+    advertised = (
+        {str(item) for item in raw_features}
+        if isinstance(raw_features, (list, tuple, set, frozenset))
+        else set()
+    )
     missing = sorted(set(required) - advertised)
     if missing:
         raise ValueError("Missing required capabilities: " + ", ".join(missing))
