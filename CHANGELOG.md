@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.2
+
+### Features
+
+- Add transport-neutral protocol compatibility primitives for Agent Protocol, Inference Protocol, and event schema versioning.
+- Add protocol range overlap and capability validation helpers.
+
+
 ## 0.16.1
 
 ### Features

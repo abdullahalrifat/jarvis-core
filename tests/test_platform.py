@@ -78,3 +78,21 @@ def test_eval_scoring_reports_missing_and_forbidden_content():
     assert not result.passed
     assert result.score == 0.0
     assert len(result.failures) == 2
+
+
+def test_protocol_compatibility_contracts():
+    from jarvis_core import (
+        AGENT_PROTOCOL_VERSION,
+        EVENT_SCHEMA_VERSION,
+        INFERENCE_PROTOCOL_VERSION,
+        ProtocolRange,
+        require_features,
+    )
+
+    assert AGENT_PROTOCOL_VERSION == 1
+    assert INFERENCE_PROTOCOL_VERSION == 1
+    assert EVENT_SCHEMA_VERSION == 1
+    assert ProtocolRange(1, 2).overlaps(ProtocolRange(2, 3))
+    assert not ProtocolRange(1, 1).overlaps(ProtocolRange(2, 3))
+    assert ProtocolRange(1, 2).supports(2)
+    require_features({"features": ["chat", "embeddings"]}, ("chat",))
