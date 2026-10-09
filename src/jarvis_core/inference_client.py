@@ -254,6 +254,22 @@ class InferenceClient:
                             "Inference endpoint returned invalid SSE JSON"
                         ) from exc
                     if isinstance(event, dict):
+                        stream_error = event.get("error")
+                        if isinstance(stream_error, dict):
+                            raise InferenceClientError(
+                                str(stream_error.get("message") or "Inference stream failed"),
+                                request_id=(
+                                    str(stream_error["request_id"])
+                                    if stream_error.get("request_id")
+                                    else None
+                                ),
+                                retryable=False,
+                                error_code=(
+                                    str(stream_error["code"])
+                                    if stream_error.get("code")
+                                    else None
+                                ),
+                            )
                         yield event
             except (URLError, OSError, TimeoutError) as exc:
                 # Once response headers or stream data exist, replay could
