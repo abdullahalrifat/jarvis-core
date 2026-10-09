@@ -16,7 +16,6 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-
 DEFAULT_TIMEOUT_SECONDS = 120.0
 MAX_RESPONSE_BYTES = 16 * 1024 * 1024
 MAX_ERROR_BYTES = 16 * 1024
@@ -131,7 +130,9 @@ class InferenceClient:
         """Return the gateway's capability and protocol declaration."""
         payload = self._request("GET", "capabilities")
         if not isinstance(payload, dict):
-            raise InferenceClientError("Inference capabilities response is not an object")
+            raise InferenceClientError(
+                "Inference capabilities response is not an object"
+            )
         return payload
 
     def complete(
@@ -185,7 +186,9 @@ class InferenceClient:
             method="POST",
         )
         try:
-            with self._opener(request, timeout=timeout or self.config.timeout) as response:
+            with self._opener(
+                request, timeout=timeout or self.config.timeout
+            ) as response:
                 total_bytes = 0
                 for line in response:
                     total_bytes += len(line)
@@ -256,13 +259,19 @@ class InferenceClient:
                 f"Could not reach inference endpoint: {exc}", retryable=True
             ) from exc
         if len(raw) > MAX_RESPONSE_BYTES:
-            raise InferenceClientError("Inference response exceeded the response size limit")
+            raise InferenceClientError(
+                "Inference response exceeded the response size limit"
+            )
         try:
             result = json.loads(raw)
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise InferenceClientError("Inference endpoint returned invalid JSON") from exc
+            raise InferenceClientError(
+                "Inference endpoint returned invalid JSON"
+            ) from exc
         if not isinstance(result, dict):
-            raise InferenceClientError("Inference endpoint returned a non-object response")
+            raise InferenceClientError(
+                "Inference endpoint returned a non-object response"
+            )
         if request_id and "request_id" not in result:
             result["request_id"] = request_id
         return result
