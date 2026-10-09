@@ -398,3 +398,31 @@ def test_stream_read_failure_after_partial_output_is_not_retryable():
 
     assert len(calls) == 1
     assert caught.value.retryable is False
+
+
+def test_structured_sse_error_becomes_non_retryable_client_error():
+    calls = []
+
+    def opener(request, timeout):
+        calls.append(request)
+        return FakeResponse(
+            b"",
+            lines=[
+                b'data: {"error":{"code":"MODEL_TIMEOUT","message":"generation timed out","retryable":true,"request_id":"req-1"}}\n',
+                b"data: [DONE]\n",
+            ],
+        )
+
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+    with pytest.raises(InferenceClientError) as caught:
+        list(
+            client.stream(
+                model="qwen3:1.7b",
+                messages=[{"role": "user", "content": "hello"}],
+            )
+        )
+
+    assert len(calls) == 1
+    assert caught.value.error_code == "MODEL_TIMEOUT"
+    assert caught.value.request_id == "req-1"
+    assert caught.value.retryable is False
