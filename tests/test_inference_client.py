@@ -158,7 +158,9 @@ def test_non_streaming_timeout_is_non_retryable():
 
     client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
     with pytest.raises(InferenceClientError) as caught:
-        client.complete(model="qwen3:1.7b", messages=[{"role": "user", "content": "hi"}])
+        client.complete(
+            model="qwen3:1.7b", messages=[{"role": "user", "content": "hi"}]
+        )
 
     assert caught.value.retryable is False
     assert caught.value.status_code is None
