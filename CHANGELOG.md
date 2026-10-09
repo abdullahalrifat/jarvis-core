@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.17.0
+
+### Features
+
+- Add a dependency-free shared inference gateway client for endpoint configuration, bearer authentication, model discovery, capabilities, chat completions, SSE streaming, and embeddings.
+- Normalize HTTP and transport failures with status, request ID, and retryability metadata; deliberately avoid automatic retries for potentially expensive inference requests.
+- Export the client and configuration types from the top-level package.
+
+### Tests
+
+- Cover configuration precedence, endpoint/auth headers, model discovery, completion payloads, streaming, and retryable HTTP failures.
+
 ## 0.16.2
 
 ### Features
