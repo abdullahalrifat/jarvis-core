@@ -35,11 +35,13 @@ For empirical routing/calibration:
 - AI Stack owns model execution, telemetry collection, persistence, and adapters into Core observations.
 - Jarvis owns real workload definitions and task-level evaluation.
 
-The intended production flow is:
+The intended production topology has independent sibling consumers:
 
-`Jarvis CLI -> AI Stack -> provider/model`
+`Jarvis CLI -> jarvis-inference -> model backend`
 
-Both downstream applications consume Core; Core must never depend on either downstream application.
+`AI Stack (optional remote control plane) -> jarvis-inference -> model backend`
+
+Jarvis and AI Stack may both consume the published Core package, but neither application may depend on the other's internal modules. Core must never depend on either downstream application, the inference gateway, a provider SDK, or deployment infrastructure. Jarvis owns local agent orchestration and task-level evaluation; AI Stack owns its server-side orchestration, persistence and telemetry; `jarvis-inference` owns model execution and bounded scheduling.
 
 ## Required validation
 
