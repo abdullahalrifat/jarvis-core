@@ -249,3 +249,180 @@ def test_closing_stream_releases_http_response_for_cancellation():
     next(stream)
     stream.close()
     assert response.closed
+
+
+def test_explicit_queue_timeout_is_retried_once_with_retry_after(monkeypatch):
+    calls = []
+    sleeps = []
+
+    def opener(request, timeout):
+        calls.append(request)
+        if len(calls) == 1:
+            raise HTTPError(
+                request.full_url,
+                429,
+                "queue timeout",
+                {
+                    "X-Request-ID": "req-queue",
+                    "Retry-After": "0",
+                },
+                io.BytesIO(
+                    b'{"detail":{"code":"QUEUE_TIMEOUT","message":"queue wait expired","retryable":true}}'
+                ),
+            )
+        return FakeResponse(b'{"choices":[{"message":{"content":"ok"}}]}')
+
+    monkeypatch.setattr("jarvis_core.inference_client.time.sleep", sleeps.append)
+    monkeypatch.setattr("jarvis_core.inference_client.random.uniform", lambda _a, _b: 0)
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+
+    result = client.complete(
+        model="qwen3:1.7b",
+        messages=[{"role": "user", "content": "hello"}],
+    )
+
+    assert len(calls) == 2
+    assert sleeps == [0]
+    assert result["choices"][0]["message"]["content"] == "ok"
+
+
+def test_queue_retry_budget_is_bounded(monkeypatch):
+    calls = []
+
+    def opener(request, timeout):
+        calls.append(request)
+        raise HTTPError(
+            request.full_url,
+            429,
+            "queue timeout",
+            {"Retry-After": "0"},
+            io.BytesIO(
+                b'{"detail":{"code":"QUEUE_TIMEOUT","message":"busy","retryable":true}}'
+            ),
+        )
+
+    monkeypatch.setattr("jarvis_core.inference_client.time.sleep", lambda _delay: None)
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+
+    with pytest.raises(InferenceClientError) as caught:
+        client.complete(
+            model="qwen3:1.7b",
+            messages=[{"role": "user", "content": "hello"}],
+        )
+
+    assert len(calls) == 2
+    assert caught.value.error_code == "QUEUE_TIMEOUT"
+    assert caught.value.retry_after == 0
+
+
+def test_structured_504_remains_non_retryable_even_if_gateway_marks_retryable():
+    def opener(_request, timeout):
+        raise HTTPError(
+            "http://inference/v1/chat/completions",
+            504,
+            "generation timed out",
+            {"Retry-After": "1"},
+            io.BytesIO(
+                b'{"detail":{"code":"MODEL_TIMEOUT","message":"generation timed out","retryable":true}}'
+            ),
+        )
+
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+    with pytest.raises(InferenceClientError) as caught:
+        client.complete(
+            model="qwen3:1.7b",
+            messages=[{"role": "user", "content": "hello"}],
+        )
+
+    assert caught.value.status_code == 504
+    assert caught.value.retryable is False
+    assert caught.value.error_code == "MODEL_TIMEOUT"
+
+
+def test_stream_retries_explicit_queue_rejection_before_receiving_events(monkeypatch):
+    calls = []
+
+    def opener(request, timeout):
+        calls.append(request)
+        if len(calls) == 1:
+            raise HTTPError(
+                request.full_url,
+                429,
+                "queue timeout",
+                {"Retry-After": "0"},
+                io.BytesIO(
+                    b'{"detail":{"code":"QUEUE_TIMEOUT","message":"busy","retryable":true}}'
+                ),
+            )
+        return FakeResponse(
+            b"",
+            lines=[
+                b'data: {"choices":[{"delta":{"content":"ok"}}]}\n',
+                b"data: [DONE]\n",
+            ],
+        )
+
+    monkeypatch.setattr("jarvis_core.inference_client.time.sleep", lambda _delay: None)
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+    events = list(
+        client.stream(
+            model="qwen3:1.7b",
+            messages=[{"role": "user", "content": "hello"}],
+        )
+    )
+
+    assert len(calls) == 2
+    assert events[0]["choices"][0]["delta"]["content"] == "ok"
+
+
+def test_stream_read_failure_after_partial_output_is_not_retryable():
+    calls = []
+
+    class BrokenResponse(FakeResponse):
+        def __iter__(self):
+            yield b'data: {"choices":[{"delta":{"content":"partial"}}]}\n'
+            raise OSError("connection reset")
+
+    def opener(request, timeout):
+        calls.append(request)
+        return BrokenResponse(b"")
+
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+    stream = client.stream(
+        model="qwen3:1.7b",
+        messages=[{"role": "user", "content": "hello"}],
+    )
+
+    with pytest.raises(InferenceClientError) as caught:
+        list(stream)
+
+    assert len(calls) == 1
+    assert caught.value.retryable is False
+
+
+def test_structured_sse_error_becomes_non_retryable_client_error():
+    calls = []
+
+    def opener(request, timeout):
+        calls.append(request)
+        return FakeResponse(
+            b"",
+            lines=[
+                b'data: {"error":{"code":"MODEL_TIMEOUT","message":"generation timed out","retryable":true,"request_id":"req-1"}}\n',
+                b"data: [DONE]\n",
+            ],
+        )
+
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+    with pytest.raises(InferenceClientError) as caught:
+        list(
+            client.stream(
+                model="qwen3:1.7b",
+                messages=[{"role": "user", "content": "hello"}],
+            )
+        )
+
+    assert len(calls) == 1
+    assert caught.value.error_code == "MODEL_TIMEOUT"
+    assert caught.value.request_id == "req-1"
+    assert caught.value.retryable is False

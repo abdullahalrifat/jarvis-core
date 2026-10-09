@@ -12,10 +12,10 @@ The package is designed to be useful **standalone**. Any Python application can 
 
 ## Install
 
-Python 3.10+ is required. The current release is **0.17.2**, which hardens shared inference timeout semantics. Publish this version only after the release workflow completes.
+Python 3.10+ is required. The current release is **0.17.3**, which adds bounded retries for explicit pre-admission queue rejections. Publish this version only after the release workflow completes.
 
 ```bash
-python -m pip install "jarvis-agent-core==0.17.2"
+python -m pip install "jarvis-agent-core==0.17.3"
 ```
 
 For development:
@@ -27,7 +27,7 @@ python -m pip install -e . -r requirements-dev.txt
 python -m pytest
 ```
 
-## Shared inference client (0.17.2)
+## Shared inference client (0.17.3)
 
 Both the Jarvis CLI and AI Stack use the Core inference client rather than implementing gateway configuration and protocol handling independently. Core provides a dependency-free `InferenceConfig` and `InferenceClient` for bearer authentication, model discovery, capability negotiation, chat completions, SSE streaming, embeddings, request IDs, and normalized transport errors. Applications retain ownership of their agent loops, tools, approvals, persistence, cancellation policy, and telemetry.
 
@@ -42,7 +42,7 @@ response = client.complete(
 )
 ```
 
-Set `INFERENCE_BASE_URL=http://inference-host:8080/v1` and `INFERENCE_API_KEY` for the gateway. `JARVIS_BASE_URL` and `JARVIS_API_KEY` remain supported as compatibility fallbacks. Core does not silently retry timed-out inference requests, avoiding accidental duplicate work on a bounded local model queue.
+Set `INFERENCE_BASE_URL=http://inference-host:8080/v1` and `INFERENCE_API_KEY` for the gateway. `JARVIS_BASE_URL` and `JARVIS_API_KEY` remain supported as compatibility fallbacks. Core retries only explicit pre-admission `QUEUE_TIMEOUT` / `QUEUE_FULL` rejections, using `Retry-After` plus jitter; ambiguous generation/transport timeouts and failures after streaming starts are never replayed. Structured SSE error frames are surfaced as `InferenceClientError` instead of being returned as successful model events. `INFERENCE_QUEUE_RETRIES` defaults to `1` (maximum `3`), and `INFERENCE_QUEUE_RETRY_BACKOFF_SECONDS` defaults to `0.5`.
 ## 0.16.2 highlights
 
 The 0.16.2 release adds the cost-aware local-first routing layer and keeps the previous empirical calibration and token-efficiency primitives intact:
