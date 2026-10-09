@@ -15,7 +15,7 @@ The package is designed to be useful **standalone**. Any Python application can 
 Python 3.10+ is required. The current release is **0.17.0**, which adds a shared inference gateway client.
 
 ```bash
-python -m pip install "jarvis-agent-core==0.16.2"
+python -m pip install "jarvis-agent-core==0.17.0"
 ```
 
 For development:
