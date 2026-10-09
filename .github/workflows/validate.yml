@@ -22,3 +22,13 @@ jobs:
       - run: pytest -q --cov=jarvis_core --cov-report=term-missing --cov-fail-under=85
       - run: python -m build
       - run: python -m twine check dist/*
+      - name: Write commit-bound certification manifest
+        if: always()
+        run: python scripts/write_certification_manifest.py certification-evidence.json
+      - name: Upload certification evidence manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: certification-evidence-${{ github.sha }}
+          path: certification-evidence.json
+          if-no-files-found: error
