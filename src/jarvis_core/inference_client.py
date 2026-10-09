@@ -186,7 +186,7 @@ class InferenceClient:
         timeout: float | None = None,
         **options: Any,
     ) -> Iterator[dict[str, Any]]:
-        """Yield decoded OpenAI-compatible server-sent events."""
+        """Yield decoded SSE events, retrying only explicit pre-admission rejections."""
         payload: dict[str, Any] = {
             "model": model,
             "messages": [dict(message) for message in messages],
@@ -197,17 +197,43 @@ class InferenceClient:
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
         payload.update(options)
-        request = Request(
-            self.config.endpoint("chat/completions"),
-            data=json.dumps(payload).encode("utf-8"),
-            headers=self.config.headers(accept="text/event-stream"),
-            method="POST",
-        )
-        try:
-            with self._opener(
-                request, timeout=timeout or self.config.timeout
-            ) as response:
-                total_bytes = 0
+        effective_timeout = timeout or self.config.timeout
+        response = None
+        for attempt in range(self.config.queue_retries + 1):
+            request = Request(
+                self.config.endpoint("chat/completions"),
+                data=json.dumps(payload).encode("utf-8"),
+                headers=self.config.headers(accept="text/event-stream"),
+                method="POST",
+            )
+            try:
+                response = self._opener(request, timeout=effective_timeout)
+                break
+            except HTTPError as exc:
+                detail = exc.read(MAX_ERROR_BYTES).decode(errors="replace")
+                error = self._http_error(exc, detail)
+                if (
+                    error.error_code not in QUEUE_REJECTION_CODES
+                    or attempt >= self.config.queue_retries
+                ):
+                    raise error from exc
+                delay = error.retry_after or 0.0
+                delay += random.uniform(0.0, self.config.queue_retry_backoff_seconds)
+                time.sleep(delay)
+            except (URLError, OSError, TimeoutError) as exc:
+                reason = getattr(exc, "reason", None)
+                ambiguous_timeout = isinstance(exc, TimeoutError) or isinstance(
+                    reason, TimeoutError
+                )
+                raise InferenceClientError(
+                    f"Could not reach inference endpoint: {exc}",
+                    retryable=not ambiguous_timeout,
+                ) from exc
+        if response is None:
+            raise InferenceClientError("Inference queue retry budget exhausted")
+        with response:
+            total_bytes = 0
+            try:
                 for line in response:
                     total_bytes += len(line)
                     if total_bytes > MAX_RESPONSE_BYTES:
@@ -229,20 +255,17 @@ class InferenceClient:
                         ) from exc
                     if isinstance(event, dict):
                         yield event
-        except HTTPError as exc:
-            detail = exc.read(MAX_ERROR_BYTES).decode(errors="replace")
-            raise self._http_error(exc, detail) from exc
-        except (URLError, OSError, TimeoutError) as exc:
-            # A read timeout can happen after the gateway admitted generation.
-            # Mark it non-retryable to avoid duplicate model work in consumers.
-            reason = getattr(exc, "reason", None)
-            ambiguous_timeout = isinstance(exc, TimeoutError) or isinstance(
-                reason, TimeoutError
-            )
-            raise InferenceClientError(
-                f"Could not reach inference endpoint: {exc}",
-                retryable=not ambiguous_timeout,
-            ) from exc
+            except (URLError, OSError, TimeoutError) as exc:
+                # Once response headers or stream data exist, replay could
+                # duplicate already admitted or partially consumed generation.
+                reason = getattr(exc, "reason", None)
+                ambiguous_timeout = isinstance(exc, TimeoutError) or isinstance(
+                    reason, TimeoutError
+                )
+                raise InferenceClientError(
+                    f"Could not reach inference endpoint: {exc}",
+                    retryable=not ambiguous_timeout,
+                ) from exc
 
     def embeddings(
         self,
