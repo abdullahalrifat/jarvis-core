@@ -373,3 +373,28 @@ def test_stream_retries_explicit_queue_rejection_before_receiving_events(monkeyp
 
     assert len(calls) == 2
     assert events[0]["choices"][0]["delta"]["content"] == "ok"
+
+
+def test_stream_read_failure_after_partial_output_is_not_retryable():
+    calls = []
+
+    class BrokenResponse(FakeResponse):
+        def __iter__(self):
+            yield b'data: {"choices":[{"delta":{"content":"partial"}}]}\n'
+            raise OSError("connection reset")
+
+    def opener(request, timeout):
+        calls.append(request)
+        return BrokenResponse(b"")
+
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+    stream = client.stream(
+        model="qwen3:1.7b",
+        messages=[{"role": "user", "content": "hello"}],
+    )
+
+    with pytest.raises(InferenceClientError) as caught:
+        list(stream)
+
+    assert len(calls) == 1
+    assert caught.value.retryable is False
