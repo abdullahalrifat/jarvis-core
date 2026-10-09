@@ -184,3 +184,24 @@ def test_timeout_is_not_replayed_by_shared_inference_client():
             model="qwen3:1.7b", messages=[{"role": "user", "content": "hello"}]
         )
     assert calls == [3]
+
+
+@pytest.mark.parametrize(
+    ("status", "retryable"),
+    [(408, False), (504, False), (429, True)],
+)
+def test_ambiguous_http_timeouts_are_not_retryable(status, retryable):
+    def opener(_request, timeout):
+        raise HTTPError(
+            "http://inference/v1/models",
+            status,
+            "gateway response",
+            {"X-Request-ID": f"req-{status}"},
+            io.BytesIO(b'{"detail":"gateway response"}'),
+        )
+
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+    with pytest.raises(InferenceClientError) as caught:
+        client.list_models()
+    assert caught.value.status_code == status
+    assert caught.value.retryable is retryable
