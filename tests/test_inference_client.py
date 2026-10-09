@@ -167,3 +167,69 @@ def test_http_errors_expose_status_request_id_and_retryability():
     assert caught.value.status_code == 503
     assert caught.value.request_id == "req-503"
     assert caught.value.retryable is True
+
+
+def test_timeout_is_not_replayed_by_shared_inference_client():
+    calls = []
+
+    def opener(_request, timeout):
+        calls.append(timeout)
+        raise TimeoutError("read timed out after server may have accepted request")
+
+    client = InferenceClient(
+        InferenceConfig("http://inference/v1", timeout=3), opener=opener
+    )
+    with pytest.raises(InferenceClientError):
+        client.complete(
+            model="qwen3:1.7b", messages=[{"role": "user", "content": "hello"}]
+        )
+    assert calls == [3]
+
+
+@pytest.mark.parametrize(
+    ("status", "retryable"),
+    [(408, False), (504, False), (429, True)],
+)
+def test_ambiguous_http_timeouts_are_not_retryable(status, retryable):
+    def opener(_request, timeout):
+        raise HTTPError(
+            "http://inference/v1/models",
+            status,
+            "gateway response",
+            {"X-Request-ID": f"req-{status}"},
+            io.BytesIO(b'{"detail":"gateway response"}'),
+        )
+
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+    with pytest.raises(InferenceClientError) as caught:
+        client.list_models()
+    assert caught.value.status_code == status
+    assert caught.value.retryable is retryable
+
+
+def test_closing_stream_releases_http_response_for_cancellation():
+    class ClosableResponse(FakeResponse):
+        def __init__(self):
+            super().__init__(
+                b"",
+                lines=[
+                    b'data: {"choices":[{"delta":{"content":"first"}}]}',
+                    b'data: {"choices":[{"delta":{"content":"second"}}]}',
+                ],
+            )
+            self.closed = False
+
+        def __exit__(self, *_args):
+            self.closed = True
+
+    response = ClosableResponse()
+    client = InferenceClient(
+        InferenceConfig("http://inference/v1"),
+        opener=lambda _request, timeout: response,
+    )
+    stream = client.stream(
+        model="qwen3:1.7b", messages=[{"role": "user", "content": "hello"}]
+    )
+    next(stream)
+    stream.close()
+    assert response.closed

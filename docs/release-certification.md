@@ -1,6 +1,6 @@
 # Release certification
 
-The current release documented by this branch is **Jarvis Core 0.15.0**.
+The current release documented by this branch is **Jarvis Core 0.17.1**. The release is published; consumers should pin the exact package version and rerun their integration gates after upgrades.
 
 ## Contract gates
 

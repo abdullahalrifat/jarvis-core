@@ -12,10 +12,10 @@ The package is designed to be useful **standalone**. Any Python application can 
 
 ## Install
 
-Python 3.10+ is required. The current release is **0.17.0**, which adds a shared inference gateway client.
+Python 3.10+ is required. The current release is **0.17.1**, which adds a shared inference gateway client.
 
 ```bash
-python -m pip install "jarvis-agent-core==0.17.0"
+python -m pip install "jarvis-agent-core==0.17.1"
 ```
 
 For development:
@@ -27,9 +27,9 @@ python -m pip install -e . -r requirements-dev.txt
 python -m pytest
 ```
 
-## Shared inference client (proposed 0.17.0)
+## Shared inference client (0.17.1)
 
-Both the Jarvis CLI and AI Stack should use the Core inference client rather than implementing gateway configuration and protocol handling independently. Core provides a dependency-free `InferenceConfig` and `InferenceClient` for bearer authentication, model discovery, capability negotiation, chat completions, SSE streaming, embeddings, request IDs, and normalized transport errors. Applications retain ownership of their agent loops, tools, approvals, persistence, cancellation policy, and telemetry.
+Both the Jarvis CLI and AI Stack use the Core inference client rather than implementing gateway configuration and protocol handling independently. Core provides a dependency-free `InferenceConfig` and `InferenceClient` for bearer authentication, model discovery, capability negotiation, chat completions, SSE streaming, embeddings, request IDs, and normalized transport errors. Applications retain ownership of their agent loops, tools, approvals, persistence, cancellation policy, and telemetry.
 
 ```python
 from jarvis_core import InferenceClient

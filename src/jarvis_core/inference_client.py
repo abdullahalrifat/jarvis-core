@@ -215,8 +215,15 @@ class InferenceClient:
             detail = exc.read(MAX_ERROR_BYTES).decode(errors="replace")
             raise self._http_error(exc, detail) from exc
         except (URLError, OSError, TimeoutError) as exc:
+            # A read timeout can happen after the gateway admitted generation.
+            # Mark it non-retryable to avoid duplicate model work in consumers.
+            reason = getattr(exc, "reason", None)
+            ambiguous_timeout = isinstance(exc, TimeoutError) or isinstance(
+                reason, TimeoutError
+            )
             raise InferenceClientError(
-                f"Could not reach inference endpoint: {exc}", retryable=True
+                f"Could not reach inference endpoint: {exc}",
+                retryable=not ambiguous_timeout,
             ) from exc
 
     def embeddings(
@@ -280,7 +287,7 @@ class InferenceClient:
 
     @staticmethod
     def _http_error(exc: HTTPError, detail: str) -> InferenceClientError:
-        retryable = exc.code in {408, 429, 500, 502, 503, 504}
+        retryable = exc.code in {429, 500, 502, 503}
         request_id = exc.headers.get("X-Request-ID") if exc.headers else None
         return InferenceClientError(
             f"Inference endpoint returned HTTP {exc.code}: {detail}",
