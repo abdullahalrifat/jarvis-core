@@ -24,6 +24,7 @@ from .capability_policy import (
 from .context import compact_messages, delta_context, summarize_tool_result
 from .messages import canonical_message, to_anthropic_messages, to_openai_messages
 from .evals import EvalCase, EvalResult, run_evals, score_output
+from .inference_client import InferenceClient, InferenceClientError, InferenceConfig
 from .providers import (
     ModelProvider,
     ModelRequest,
@@ -157,6 +158,9 @@ __all__ = [
     "ApprovalDecision",
     "ApprovalRequest",
     "ApprovalResponse",
+    "InferenceClient",
+    "InferenceClientError",
+    "InferenceConfig",
     "ModelProvider",
     "ModelRequest",
     "ModelResponse",

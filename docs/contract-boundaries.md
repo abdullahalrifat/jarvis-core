@@ -37,9 +37,9 @@ Examples:
 
 ## Provider boundary
 
-The `ModelProvider` protocol is the stable application boundary. An implementation receives a `ModelRequest` and returns a `ModelResponse`. Core provides normalization helpers but deliberately does not implement HTTP transports or provider SDK clients.
+The `ModelProvider` protocol is the stable application boundary. An implementation receives a `ModelRequest` and returns a `ModelResponse`. Core does not ship vendor SDKs. For the Jarvis stack, Core also provides a dependency-free `InferenceClient` that standardizes the shared gateway URL configuration, bearer authentication, model catalog, capabilities, chat completions, SSE streaming, embeddings, request IDs and transport errors.
 
-An application may therefore choose any model backend while keeping its agent logic expressed in Core contracts.
+Jarvis CLI and AI Stack should use that client for the common `jarvis-inference` wire contract while retaining their own agent loops, tools, approvals, cancellation, persistence and telemetry. An application may still implement a different `ModelProvider` for other backends.
 
 ## Trust model
 
