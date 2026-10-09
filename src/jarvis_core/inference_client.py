@@ -258,13 +258,11 @@ class InferenceClient:
             except (URLError, OSError, TimeoutError) as exc:
                 # Once response headers or stream data exist, replay could
                 # duplicate already admitted or partially consumed generation.
-                reason = getattr(exc, "reason", None)
-                ambiguous_timeout = isinstance(exc, TimeoutError) or isinstance(
-                    reason, TimeoutError
-                )
+                # Once the HTTP stream is open, the gateway may already be
+                # generating or have yielded partial output; never replay it.
                 raise InferenceClientError(
                     f"Could not reach inference endpoint: {exc}",
-                    retryable=not ambiguous_timeout,
+                    retryable=False,
                 ) from exc
 
     def embeddings(
