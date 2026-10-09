@@ -64,8 +64,8 @@ class InferenceConfig:
             raise ValueError("Inference base_url must use http:// or https://")
         if self.timeout <= 0:
             raise ValueError("Inference timeout must be positive")
-        if self.queue_retries < 0:
-            raise ValueError("Inference queue retries cannot be negative")
+        if self.queue_retries < 0 or self.queue_retries > 3:
+            raise ValueError("Inference queue retries must be between 0 and 3")
         if self.queue_retry_backoff_seconds < 0:
             raise ValueError("Inference queue retry backoff cannot be negative")
         object.__setattr__(self, "base_url", normalized)
@@ -363,7 +363,12 @@ class InferenceClient:
                 if isinstance(payload, dict):
                     error_code = payload.get("code")
                     message = str(payload.get("message") or detail)
-                    retryable = bool(payload.get("retryable", retryable))
+                    if exc.code in {408, 504}:
+                        retryable = False
+                    elif error_code in QUEUE_REJECTION_CODES:
+                        retryable = True
+                    else:
+                        retryable = bool(payload.get("retryable", retryable))
         except (TypeError, ValueError):
             pass
         return InferenceClientError(
