@@ -176,7 +176,11 @@ def test_timeout_is_not_replayed_by_shared_inference_client():
         calls.append(timeout)
         raise TimeoutError("read timed out after server may have accepted request")
 
-    client = InferenceClient(InferenceConfig("http://inference/v1", timeout=3), opener=opener)
+    client = InferenceClient(
+        InferenceConfig("http://inference/v1", timeout=3), opener=opener
+    )
     with pytest.raises(InferenceClientError):
-        client.complete(model="qwen3:1.7b", messages=[{"role": "user", "content": "hello"}])
+        client.complete(
+            model="qwen3:1.7b", messages=[{"role": "user", "content": "hello"}]
+        )
     assert calls == [3]
