@@ -313,3 +313,26 @@ def test_queue_retry_budget_is_bounded(monkeypatch):
     assert len(calls) == 2
     assert caught.value.error_code == "QUEUE_TIMEOUT"
     assert caught.value.retry_after == 0
+
+def test_structured_504_remains_non_retryable_even_if_gateway_marks_retryable():
+    def opener(_request, timeout):
+        raise HTTPError(
+            "http://inference/v1/chat/completions",
+            504,
+            "generation timed out",
+            {"Retry-After": "1"},
+            io.BytesIO(
+                b'{"detail":{"code":"MODEL_TIMEOUT","message":"generation timed out","retryable":true}}'
+            ),
+        )
+
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+    with pytest.raises(InferenceClientError) as caught:
+        client.complete(
+            model="qwen3:1.7b",
+            messages=[{"role": "user", "content": "hello"}],
+        )
+
+    assert caught.value.status_code == 504
+    assert caught.value.retryable is False
+    assert caught.value.error_code == "MODEL_TIMEOUT"
