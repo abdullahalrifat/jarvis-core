@@ -1,6 +1,6 @@
 # Release certification
 
-The current release documented by this branch is **Jarvis Core 0.17.1**. The release is published; consumers should pin the exact package version and rerun their integration gates after upgrades.
+This branch prepares **Jarvis Core 0.17.2**. Publish the package only after the required release gates pass; downstream consumers should pin 0.17.2 only after it is available on PyPI and should rerun their integration gates.
 
 ## Contract gates
 
