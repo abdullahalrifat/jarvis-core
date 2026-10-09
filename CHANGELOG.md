@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.17.3
+
+### Reliability
+
+- Retry only explicit `QUEUE_TIMEOUT` and `QUEUE_FULL` HTTP rejections, which indicate the gateway did not admit generation.
+- Honor `Retry-After` and apply bounded jitter; keep ambiguous transport, 408, 504, and streaming read failures non-retryable.
+- Expose structured inference error codes and retry metadata on `InferenceClientError`.
+
+### Tests
+
+- Verify one bounded retry for explicit queue rejection and prove the retry budget cannot loop indefinitely.
+
+
 ## 0.17.2
 
 ### Reliability
