@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.17.1
+
+### Fixes
+
+- Treat HTTP 408/504 and ambiguous transport timeouts as non-retryable so consumers do not replay potentially admitted inference generations.
+- Ensure stream cancellation closes the underlying HTTP response.
+
+### Tests
+
+- Cover timeout single-attempt behavior, HTTP retry classification and stream cancellation cleanup.
+
+
 ## 0.17.0
 
 ### Features
