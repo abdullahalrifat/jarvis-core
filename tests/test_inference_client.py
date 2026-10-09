@@ -249,3 +249,69 @@ def test_closing_stream_releases_http_response_for_cancellation():
     next(stream)
     stream.close()
     assert response.closed
+
+
+def test_explicit_queue_timeout_is_retried_once_with_retry_after(monkeypatch):
+    calls = []
+    sleeps = []
+
+    def opener(request, timeout):
+        calls.append(request)
+        if len(calls) == 1:
+            raise HTTPError(
+                request.full_url,
+                429,
+                "queue timeout",
+                {
+                    "X-Request-ID": "req-queue",
+                    "Retry-After": "0",
+                },
+                io.BytesIO(
+                    b'{"detail":{"code":"QUEUE_TIMEOUT","message":"queue wait expired","retryable":true}}'
+                ),
+            )
+        return FakeResponse(b'{"choices":[{"message":{"content":"ok"}}]}')
+
+    monkeypatch.setattr("jarvis_core.inference_client.time.sleep", sleeps.append)
+    monkeypatch.setattr("jarvis_core.inference_client.random.uniform", lambda _a, _b: 0)
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+
+    result = client.complete(
+        model="qwen3:1.7b",
+        messages=[{"role": "user", "content": "hello"}],
+    )
+
+    assert len(calls) == 2
+    assert sleeps == [0]
+    assert result["choices"][0]["message"]["content"] == "ok"
+
+
+def test_queue_retry_budget_is_bounded(monkeypatch):
+    calls = []
+
+    def opener(request, timeout):
+        calls.append(request)
+        raise HTTPError(
+            request.full_url,
+            429,
+            "queue timeout",
+            {"Retry-After": "0"},
+            io.BytesIO(
+                b'{"detail":{"code":"QUEUE_TIMEOUT","message":"busy","retryable":true}}'
+            ),
+        )
+
+    monkeypatch.setattr("jarvis_core.inference_client.time.sleep", lambda _delay: None)
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+
+    with pytest.raises(InferenceClientError) as caught:
+        client.complete(
+            model="qwen3:1.7b",
+            messages=[{"role": "user", "content": "hello"}],
+        )
+
+    assert len(calls) == 2
+    assert caught.value.error_code == "QUEUE_TIMEOUT"
+    assert caught.value.retry_after == 0
+
+
