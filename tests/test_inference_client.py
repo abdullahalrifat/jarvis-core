@@ -167,3 +167,16 @@ def test_http_errors_expose_status_request_id_and_retryability():
     assert caught.value.status_code == 503
     assert caught.value.request_id == "req-503"
     assert caught.value.retryable is True
+
+
+def test_timeout_is_not_replayed_by_shared_inference_client():
+    calls = []
+
+    def opener(_request, timeout):
+        calls.append(timeout)
+        raise TimeoutError("read timed out after server may have accepted request")
+
+    client = InferenceClient(InferenceConfig("http://inference/v1", timeout=3), opener=opener)
+    with pytest.raises(InferenceClientError):
+        client.complete(model="qwen3:1.7b", messages=[{"role": "user", "content": "hello"}])
+    assert calls == [3]
