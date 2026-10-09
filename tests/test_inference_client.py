@@ -313,4 +313,3 @@ def test_queue_retry_budget_is_bounded(monkeypatch):
     assert len(calls) == 2
     assert caught.value.error_code == "QUEUE_TIMEOUT"
     assert caught.value.retry_after == 0
-
