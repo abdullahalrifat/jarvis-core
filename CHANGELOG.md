@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.17.2
+
+### Reliability
+
+- Mark non-streaming inference timeouts as non-retryable when request admission is ambiguous, preventing duplicate expensive generations in consumers.
+- Preserve retryability for clear connection failures and explicitly retryable HTTP status codes.
+
+### Tests
+
+- Add regression coverage for non-streaming read timeouts.
+
+
 ## 0.17.1
 
 ### Fixes
