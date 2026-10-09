@@ -264,8 +264,16 @@ class InferenceClient:
             detail = exc.read(MAX_ERROR_BYTES).decode(errors="replace")
             raise self._http_error(exc, detail) from exc
         except (URLError, OSError, TimeoutError) as exc:
+            # A timeout may happen after a POST was admitted by the gateway.
+            # Never replay ambiguous generation work; only a clear connection
+            # failure before admission is eligible for consumer-level retry.
+            reason = getattr(exc, "reason", None)
+            ambiguous_timeout = isinstance(exc, TimeoutError) or isinstance(
+                reason, TimeoutError
+            )
             raise InferenceClientError(
-                f"Could not reach inference endpoint: {exc}", retryable=True
+                f"Could not reach inference endpoint: {exc}",
+                retryable=not ambiguous_timeout,
             ) from exc
         if len(raw) > MAX_RESPONSE_BYTES:
             raise InferenceClientError(
