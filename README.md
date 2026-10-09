@@ -134,7 +134,7 @@ The Core boundary is deliberately implementation-neutral. A CLI can implement a 
 
 ## Provider-neutral model boundary
 
-Core defines the model boundary but never ships a model-provider SDK. Concrete HTTP transports, SDK clients, credentials, endpoint-specific request formatting, retries and provider-specific error handling remain application responsibilities.
+Core defines the model boundary and does not ship vendor SDKs. The shared InferenceClient owns the common Jarvis inference-gateway HTTP contract; applications may keep provider SDKs and vendor-specific transports, credential lifecycle, cancellation policy, telemetry and task-specific error handling at their own boundary.
 
 ## What Core deliberately does not do
 
