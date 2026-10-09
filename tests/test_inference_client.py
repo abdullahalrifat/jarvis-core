@@ -205,3 +205,31 @@ def test_ambiguous_http_timeouts_are_not_retryable(status, retryable):
         client.list_models()
     assert caught.value.status_code == status
     assert caught.value.retryable is retryable
+
+
+def test_closing_stream_releases_http_response_for_cancellation():
+    class ClosableResponse(FakeResponse):
+        def __init__(self):
+            super().__init__(
+                b"",
+                lines=[
+                    b'data: {"choices":[{"delta":{"content":"first"}}]}\\n',
+                    b'data: {"choices":[{"delta":{"content":"second"}}]}\\n',
+                ],
+            )
+            self.closed = False
+
+        def __exit__(self, *_args):
+            self.closed = True
+
+    response = ClosableResponse()
+    client = InferenceClient(
+        InferenceConfig("http://inference/v1"),
+        opener=lambda _request, timeout: response,
+    )
+    stream = client.stream(
+        model="qwen3:1.7b", messages=[{"role": "user", "content": "hello"}]
+    )
+    next(stream)
+    stream.close()
+    assert response.closed
