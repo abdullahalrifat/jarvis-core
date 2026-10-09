@@ -213,8 +213,8 @@ def test_closing_stream_releases_http_response_for_cancellation():
             super().__init__(
                 b"",
                 lines=[
-                    b'data: {"choices":[{"delta":{"content":"first"}}]}\n',
-                    b'data: {"choices":[{"delta":{"content":"second"}}]}\n',
+                    b'data: {"choices":[{"delta":{"content":"first"}}]}',
+                    b'data: {"choices":[{"delta":{"content":"second"}}]}',
                 ],
             )
             self.closed = False
