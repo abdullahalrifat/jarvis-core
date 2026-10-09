@@ -337,3 +337,39 @@ def test_structured_504_remains_non_retryable_even_if_gateway_marks_retryable():
     assert caught.value.status_code == 504
     assert caught.value.retryable is False
     assert caught.value.error_code == "MODEL_TIMEOUT"
+
+
+def test_stream_retries_explicit_queue_rejection_before_receiving_events(monkeypatch):
+    calls = []
+
+    def opener(request, timeout):
+        calls.append(request)
+        if len(calls) == 1:
+            raise HTTPError(
+                request.full_url,
+                429,
+                "queue timeout",
+                {"Retry-After": "0"},
+                io.BytesIO(
+                    b'{"detail":{"code":"QUEUE_TIMEOUT","message":"busy","retryable":true}}'
+                ),
+            )
+        return FakeResponse(
+            b"",
+            lines=[
+                b'data: {"choices":[{"delta":{"content":"ok"}}]}\n',
+                b"data: [DONE]\n",
+            ],
+        )
+
+    monkeypatch.setattr("jarvis_core.inference_client.time.sleep", lambda _delay: None)
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+    events = list(
+        client.stream(
+            model="qwen3:1.7b",
+            messages=[{"role": "user", "content": "hello"}],
+        )
+    )
+
+    assert len(calls) == 2
+    assert events[0]["choices"][0]["delta"]["content"] == "ok"
