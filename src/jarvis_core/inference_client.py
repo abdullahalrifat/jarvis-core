@@ -248,7 +248,9 @@ class InferenceClient:
             method=method,
         )
         try:
-            with self._opener(request, timeout=timeout or self.config.timeout) as response:
+            with self._opener(
+                request, timeout=timeout or self.config.timeout
+            ) as response:
                 raw = response.read(MAX_RESPONSE_BYTES + 1)
                 request_id = response.headers.get("X-Request-ID")
         except HTTPError as exc:

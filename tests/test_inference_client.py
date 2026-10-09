@@ -99,7 +99,9 @@ def test_complete_serializes_openai_compatible_payload():
         captured["timeout"] = timeout
         return FakeResponse(b'{"choices":[{"message":{"content":"ok"}}]}')
 
-    client = InferenceClient(InferenceConfig("http://inference/v1", "key"), opener=opener)
+    client = InferenceClient(
+        InferenceConfig("http://inference/v1", "key"), opener=opener
+    )
     result = client.complete(
         model="qwen3:1.7b",
         messages=[{"role": "user", "content": "hello"}],
