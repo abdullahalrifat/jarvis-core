@@ -12,7 +12,7 @@ The package is designed to be useful **standalone**. Any Python application can 
 
 ## Install
 
-Python 3.10+ is required. The current release is **0.16.2**.
+Python 3.10+ is required. The current published release is **0.16.2**. The proposed 0.17.0 release adds a shared inference gateway client.
 
 ```bash
 python -m pip install "jarvis-agent-core==0.16.2"
@@ -27,6 +27,22 @@ python -m pip install -e . -r requirements-dev.txt
 python -m pytest
 ```
 
+## Shared inference client (proposed 0.17.0)
+
+Both the Jarvis CLI and AI Stack should use the Core inference client rather than implementing gateway configuration and protocol handling independently. Core provides a dependency-free `InferenceConfig` and `InferenceClient` for bearer authentication, model discovery, capability negotiation, chat completions, SSE streaming, embeddings, request IDs, and normalized transport errors. Applications retain ownership of their agent loops, tools, approvals, persistence, cancellation policy, and telemetry.
+
+```python
+from jarvis_core import InferenceClient
+
+client = InferenceClient.from_env(user_agent="my-agent/1.0")
+models = client.list_models()
+response = client.complete(
+    model="qwen3:1.7b",
+    messages=[{"role": "user", "content": "Hello"}],
+)
+```
+
+Set `INFERENCE_BASE_URL=http://inference-host:8080/v1` and `INFERENCE_API_KEY` for the gateway. `JARVIS_BASE_URL` and `JARVIS_API_KEY` remain supported as compatibility fallbacks. Core does not silently retry timed-out inference requests, avoiding accidental duplicate work on a bounded local model queue.
 ## 0.16.2 highlights
 
 The 0.16.2 release adds the cost-aware local-first routing layer and keeps the previous empirical calibration and token-efficiency primitives intact:
