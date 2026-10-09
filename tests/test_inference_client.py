@@ -150,6 +150,20 @@ def test_stream_decodes_sse_and_stops_at_done():
     assert events[0]["choices"][0]["delta"]["content"] == "hello"
 
 
+def test_non_streaming_timeout_is_non_retryable():
+    from urllib.error import URLError
+
+    def opener(_request, timeout):
+        raise URLError(TimeoutError("read timed out"))
+
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+    with pytest.raises(InferenceClientError) as caught:
+        client.complete(model="qwen3:1.7b", messages=[{"role": "user", "content": "hi"}])
+
+    assert caught.value.retryable is False
+    assert caught.value.status_code is None
+
+
 def test_http_errors_expose_status_request_id_and_retryability():
     def opener(_request, timeout):
         raise HTTPError(
