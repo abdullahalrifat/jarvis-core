@@ -151,7 +151,7 @@ def test_stream_decodes_sse_and_stops_at_done():
 
 
 def test_http_errors_expose_status_request_id_and_retryability():
-    def opener(_request, _timeout):
+    def opener(_request, timeout):
         raise HTTPError(
             "http://inference/v1/models",
             503,
