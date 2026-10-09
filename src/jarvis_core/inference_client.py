@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import json
 import os
+import random
+import time
 from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
@@ -19,6 +21,7 @@ from urllib.request import Request, urlopen
 DEFAULT_TIMEOUT_SECONDS = 120.0
 MAX_RESPONSE_BYTES = 16 * 1024 * 1024
 MAX_ERROR_BYTES = 16 * 1024
+QUEUE_REJECTION_CODES = frozenset({"QUEUE_TIMEOUT", "QUEUE_FULL"})
 
 
 class InferenceClientError(RuntimeError):
@@ -31,11 +34,15 @@ class InferenceClientError(RuntimeError):
         status_code: int | None = None,
         request_id: str | None = None,
         retryable: bool = False,
+        error_code: str | None = None,
+        retry_after: float | None = None,
     ) -> None:
         super().__init__(message)
         self.status_code = status_code
         self.request_id = request_id
         self.retryable = retryable
+        self.error_code = error_code
+        self.retry_after = retry_after
 
 
 @dataclass(frozen=True)
@@ -46,6 +53,8 @@ class InferenceConfig:
     api_key: str = ""
     timeout: float = DEFAULT_TIMEOUT_SECONDS
     user_agent: str = "jarvis-agent-core"
+    queue_retries: int = 1
+    queue_retry_backoff_seconds: float = 0.5
 
     def __post_init__(self) -> None:
         normalized = self.base_url.strip().rstrip("/")
@@ -55,6 +64,10 @@ class InferenceConfig:
             raise ValueError("Inference base_url must use http:// or https://")
         if self.timeout <= 0:
             raise ValueError("Inference timeout must be positive")
+        if self.queue_retries < 0:
+            raise ValueError("Inference queue retries cannot be negative")
+        if self.queue_retry_backoff_seconds < 0:
+            raise ValueError("Inference queue retry backoff cannot be negative")
         object.__setattr__(self, "base_url", normalized)
 
     @classmethod
@@ -83,6 +96,10 @@ class InferenceConfig:
             api_key=api_key,
             timeout=timeout,
             user_agent=user_agent,
+            queue_retries=int(os.getenv("INFERENCE_QUEUE_RETRIES", "1")),
+            queue_retry_backoff_seconds=float(
+                os.getenv("INFERENCE_QUEUE_RETRY_BACKOFF_SECONDS", "0.5")
+            ),
         )
 
     def headers(self, *, accept: str = "application/json") -> dict[str, str]:
@@ -105,8 +122,9 @@ class InferenceClient:
     """Dependency-free client for the versioned Jarvis inference API.
 
     The configured base URL should include the API prefix, usually
-    http://inference-host:8080/v1. The client intentionally does not retry
-    requests: retrying an inference timeout can duplicate expensive model work.
+    http://inference-host:8080/v1. The client retries only explicit queue
+    rejections, which guarantee that generation was not admitted. Ambiguous
+    transport and generation timeouts are never replayed.
     """
 
     def __init__(self, config: InferenceConfig, *, opener=urlopen) -> None:
@@ -248,58 +266,86 @@ class InferenceClient:
         timeout: float | None = None,
     ) -> dict[str, Any]:
         body = json.dumps(payload).encode("utf-8") if payload is not None else None
-        request = Request(
-            self.config.endpoint(path),
-            data=body,
-            headers=self.config.headers(),
-            method=method,
-        )
-        try:
-            with self._opener(
-                request, timeout=timeout or self.config.timeout
-            ) as response:
-                raw = response.read(MAX_RESPONSE_BYTES + 1)
-                request_id = response.headers.get("X-Request-ID")
-        except HTTPError as exc:
-            detail = exc.read(MAX_ERROR_BYTES).decode(errors="replace")
-            raise self._http_error(exc, detail) from exc
-        except (URLError, OSError, TimeoutError) as exc:
-            # A timeout may happen after a POST was admitted by the gateway.
-            # Never replay ambiguous generation work; only a clear connection
-            # failure before admission is eligible for consumer-level retry.
-            reason = getattr(exc, "reason", None)
-            ambiguous_timeout = isinstance(exc, TimeoutError) or isinstance(
-                reason, TimeoutError
+        effective_timeout = timeout or self.config.timeout
+        for attempt in range(self.config.queue_retries + 1):
+            request = Request(
+                self.config.endpoint(path),
+                data=body,
+                headers=self.config.headers(),
+                method=method,
             )
-            raise InferenceClientError(
-                f"Could not reach inference endpoint: {exc}",
-                retryable=not ambiguous_timeout,
-            ) from exc
-        if len(raw) > MAX_RESPONSE_BYTES:
-            raise InferenceClientError(
-                "Inference response exceeded the response size limit"
-            )
-        try:
-            result = json.loads(raw)
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise InferenceClientError(
-                "Inference endpoint returned invalid JSON"
-            ) from exc
-        if not isinstance(result, dict):
-            raise InferenceClientError(
-                "Inference endpoint returned a non-object response"
-            )
-        if request_id and "request_id" not in result:
-            result["request_id"] = request_id
-        return result
+            try:
+                with self._opener(request, timeout=effective_timeout) as response:
+                    raw = response.read(MAX_RESPONSE_BYTES + 1)
+                    request_id = response.headers.get("X-Request-ID")
+            except HTTPError as exc:
+                detail = exc.read(MAX_ERROR_BYTES).decode(errors="replace")
+                error = self._http_error(exc, detail)
+                if (
+                    error.error_code not in QUEUE_REJECTION_CODES
+                    or attempt >= self.config.queue_retries
+                ):
+                    raise error from exc
+                delay = error.retry_after or 0.0
+                delay += random.uniform(0.0, self.config.queue_retry_backoff_seconds)
+                time.sleep(delay)
+                continue
+            except (URLError, OSError, TimeoutError) as exc:
+                # A timeout may happen after a POST was admitted by the gateway.
+                # Never replay ambiguous generation work.
+                reason = getattr(exc, "reason", None)
+                ambiguous_timeout = isinstance(exc, TimeoutError) or isinstance(
+                    reason, TimeoutError
+                )
+                raise InferenceClientError(
+                    f"Could not reach inference endpoint: {exc}",
+                    retryable=not ambiguous_timeout,
+                ) from exc
+            if len(raw) > MAX_RESPONSE_BYTES:
+                raise InferenceClientError(
+                    "Inference response exceeded the response size limit"
+                )
+            try:
+                result = json.loads(raw)
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                raise InferenceClientError(
+                    "Inference endpoint returned invalid JSON"
+                ) from exc
+            if not isinstance(result, dict):
+                raise InferenceClientError(
+                    "Inference endpoint returned a non-object response"
+                )
+            if request_id and "request_id" not in result:
+                result["request_id"] = request_id
+            return result
+        raise InferenceClientError("Inference queue retry budget exhausted")
 
     @staticmethod
     def _http_error(exc: HTTPError, detail: str) -> InferenceClientError:
         retryable = exc.code in {429, 500, 502, 503}
         request_id = exc.headers.get("X-Request-ID") if exc.headers else None
+        retry_after_value = exc.headers.get("Retry-After") if exc.headers else None
+        try:
+            retry_after = max(0.0, float(retry_after_value)) if retry_after_value else None
+        except (TypeError, ValueError):
+            retry_after = None
+        error_code = None
+        message = detail
+        try:
+            decoded = json.loads(detail)
+            if isinstance(decoded, dict):
+                payload = decoded.get("detail", decoded)
+                if isinstance(payload, dict):
+                    error_code = payload.get("code")
+                    message = str(payload.get("message") or detail)
+                    retryable = bool(payload.get("retryable", retryable))
+        except (TypeError, ValueError):
+            pass
         return InferenceClientError(
-            f"Inference endpoint returned HTTP {exc.code}: {detail}",
+            f"Inference endpoint returned HTTP {exc.code}: {message}",
             status_code=exc.code,
             request_id=request_id,
             retryable=retryable,
+            error_code=error_code,
+            retry_after=retry_after,
         )
