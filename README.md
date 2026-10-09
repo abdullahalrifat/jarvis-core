@@ -42,7 +42,7 @@ response = client.complete(
 )
 ```
 
-Set `INFERENCE_BASE_URL=http://inference-host:8080/v1` and `INFERENCE_API_KEY` for the gateway. `JARVIS_BASE_URL` and `JARVIS_API_KEY` remain supported as compatibility fallbacks. Core retries only explicit pre-admission `QUEUE_TIMEOUT` / `QUEUE_FULL` rejections, using `Retry-After` plus jitter; ambiguous generation/transport timeouts and failures after streaming starts are never replayed. `INFERENCE_QUEUE_RETRIES` defaults to `1` (maximum `3`), and `INFERENCE_QUEUE_RETRY_BACKOFF_SECONDS` defaults to `0.5`.
+Set `INFERENCE_BASE_URL=http://inference-host:8080/v1` and `INFERENCE_API_KEY` for the gateway. `JARVIS_BASE_URL` and `JARVIS_API_KEY` remain supported as compatibility fallbacks. Core retries only explicit pre-admission `QUEUE_TIMEOUT` / `QUEUE_FULL` rejections, using `Retry-After` plus jitter; ambiguous generation/transport timeouts and failures after streaming starts are never replayed. Structured SSE error frames are surfaced as `InferenceClientError` instead of being returned as successful model events. `INFERENCE_QUEUE_RETRIES` defaults to `1` (maximum `3`), and `INFERENCE_QUEUE_RETRY_BACKOFF_SECONDS` defaults to `0.5`.
 ## 0.16.2 highlights
 
 The 0.16.2 release adds the cost-aware local-first routing layer and keeps the previous empirical calibration and token-efficiency primitives intact:
