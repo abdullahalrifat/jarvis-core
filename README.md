@@ -12,7 +12,7 @@ The package is designed to be useful **standalone**. Any Python application can 
 
 ## Install
 
-Python 3.10+ is required. This branch prepares release **0.17.2**, which hardens shared inference timeout semantics. Publish and install this version only after the release workflow completes.
+Python 3.10+ is required. The current release is **0.17.2**, which hardens shared inference timeout semantics. Publish this version only after the release workflow completes.
 
 ```bash
 python -m pip install "jarvis-agent-core==0.17.2"
