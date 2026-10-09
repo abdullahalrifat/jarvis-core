@@ -349,7 +349,9 @@ class InferenceClient:
         request_id = exc.headers.get("X-Request-ID") if exc.headers else None
         retry_after_value = exc.headers.get("Retry-After") if exc.headers else None
         try:
-            retry_after = max(0.0, float(retry_after_value)) if retry_after_value else None
+            retry_after = (
+                max(0.0, float(retry_after_value)) if retry_after_value else None
+            )
         except (TypeError, ValueError):
             retry_after = None
         error_code = None
