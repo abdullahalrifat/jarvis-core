@@ -314,6 +314,7 @@ def test_queue_retry_budget_is_bounded(monkeypatch):
     assert caught.value.error_code == "QUEUE_TIMEOUT"
     assert caught.value.retry_after == 0
 
+
 def test_structured_504_remains_non_retryable_even_if_gateway_marks_retryable():
     def opener(_request, timeout):
         raise HTTPError(
