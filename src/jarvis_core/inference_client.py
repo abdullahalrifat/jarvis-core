@@ -258,7 +258,8 @@ class InferenceClient:
                         if isinstance(stream_error, dict):
                             raise InferenceClientError(
                                 str(
-                                    stream_error.get("message") or "Inference stream failed"
+                                    stream_error.get("message")
+                                    or "Inference stream failed"
                                 ),
                                 request_id=(
                                     str(stream_error["request_id"])
