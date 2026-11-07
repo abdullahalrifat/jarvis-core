@@ -1,8 +1,9 @@
 """Provider-neutral model contracts and normalization helpers.
 
-The core package contains only provider-independent data structures and small
-normalization helpers. Provider SDKs, transports, credentials, retries and
-endpoint-specific request/response handling remain outside Core.
+The core package contains provider-neutral data structures and normalization
+helpers plus a shared, dependency-free client for the Jarvis inference gateway.
+Provider SDKs, vendor-specific transports, credential lifecycle, and
+application-specific retry/cancellation policy remain outside Core.
 """
 
 from __future__ import annotations
