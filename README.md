@@ -12,10 +12,10 @@ The package is designed to be useful **standalone**. Any Python application can 
 
 ## Install
 
-Python 3.10+ is required. The current release is **0.17.3**, which adds bounded retries for explicit pre-admission queue rejections. Publish this version only after the release workflow completes.
+Python 3.10+ is required. The current release is **0.17.4**, which hardens ledger reservation cleanup, bounds retry sleeps with a total deadline, and decodes OpenAI JSON-string tool-call arguments. Publish this version only after the release workflow completes.
 
 ```bash
-python -m pip install "jarvis-agent-core==0.17.3"
+python -m pip install "jarvis-agent-core==0.17.4"
 ```
 
 For development:
@@ -27,7 +27,7 @@ python -m pip install -e . -r requirements-dev.txt
 python -m pytest
 ```
 
-## Shared inference client (0.17.3)
+## Shared inference client (0.17.4)
 
 Both the Jarvis CLI and AI Stack use the Core inference client rather than implementing gateway configuration and protocol handling independently. Core provides a dependency-free `InferenceConfig` and `InferenceClient` for bearer authentication, model discovery, capability negotiation, chat completions, SSE streaming, embeddings, request IDs, and normalized transport errors. Applications retain ownership of their agent loops, tools, approvals, persistence, cancellation policy, and telemetry.
 

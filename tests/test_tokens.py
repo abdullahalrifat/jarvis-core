@@ -45,3 +45,20 @@ def test_call_refunds_reservation_when_usage_extraction_fails():
         )
 
     assert ledger.totals(include_reserved=True).input_tokens == 0
+
+
+def test_failed_record_refunds_its_reservation(monkeypatch):
+    """record() must not leak a reservation when commit-time validation fails."""
+    ledger = TokenLedger(TokenBudget(max_run_input=10, max_turn_input=10))
+
+    def failing_commit(reservation, usage):
+        raise BudgetExceeded("run input token budget exceeded")
+
+    monkeypatch.setattr(ledger, "commit", failing_commit)
+
+    with pytest.raises(BudgetExceeded):
+        ledger.record(Usage(agent="agent", input_tokens=5, output_tokens=0))
+
+    # The hold was refunded automatically; no manual refund is needed.
+    assert ledger.totals(include_reserved=True).input_tokens == 0
+    assert ledger.totals().input_tokens == 0

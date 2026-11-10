@@ -61,3 +61,44 @@ def test_make_model_response_is_canonical() -> None:
     assert isinstance(response, ModelResponse)
     assert response.content == "done"
     assert response.usage.total_tokens == 6
+
+
+def test_normalize_tool_call_decodes_openai_json_string_arguments() -> None:
+    """OpenAI ships tool-call arguments as a JSON object string on the wire."""
+    call = normalize_tool_call(
+        {
+            "id": "call-1",
+            "function": {"name": "search", "arguments": '{"q": "x"}'},
+        }
+    )
+
+    assert call == ToolCall(id="call-1", name="search", arguments={"q": "x"})
+
+
+def test_normalize_tool_call_handles_empty_arguments_string() -> None:
+    call = normalize_tool_call(
+        {"id": "call-2", "function": {"name": "ping", "arguments": ""}}
+    )
+
+    assert call == ToolCall(id="call-2", name="ping", arguments={})
+
+
+def test_normalize_tool_call_rejects_invalid_json_string() -> None:
+    import pytest
+
+    with pytest.raises(TypeError):
+        normalize_tool_call(
+            {
+                "id": "call-3",
+                "function": {"name": "search", "arguments": "{not-json"},
+            }
+        )
+
+
+def test_normalize_tool_call_rejects_non_mapping_json_string() -> None:
+    import pytest
+
+    with pytest.raises(TypeError):
+        normalize_tool_call(
+            {"id": "call-4", "function": {"name": "search", "arguments": "[1, 2]"}}
+        )

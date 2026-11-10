@@ -152,7 +152,13 @@ class TokenLedger:
 
     def record(self, usage: Usage) -> None:
         reservation = self.reserve(usage.agent, usage.input_tokens, usage.output_tokens)
-        self.commit(reservation, usage)
+        try:
+            # Validation can still fail at commit time; never leak the hold.
+            self.commit(reservation, usage)
+        except BaseException:
+            with self._lock:
+                self._reservations.pop(reservation.id, None)
+            raise
 
     @staticmethod
     def usage_from_provider(

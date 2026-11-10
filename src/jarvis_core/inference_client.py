@@ -21,7 +21,10 @@ from urllib.request import Request, urlopen
 DEFAULT_TIMEOUT_SECONDS = 120.0
 MAX_RESPONSE_BYTES = 16 * 1024 * 1024
 MAX_ERROR_BYTES = 16 * 1024
+MAX_RETRY_SLEEP_SECONDS = 30.0
+DEFAULT_RETRY_DEADLINE_SECONDS = 60.0
 QUEUE_REJECTION_CODES = frozenset({"QUEUE_TIMEOUT", "QUEUE_FULL"})
+RESERVED_OPTION_KEYS = frozenset({"model", "stream"})
 
 
 class InferenceClientError(RuntimeError):
@@ -55,6 +58,8 @@ class InferenceConfig:
     user_agent: str = "jarvis-agent-core"
     queue_retries: int = 1
     queue_retry_backoff_seconds: float = 0.5
+    retry_sleep_cap_seconds: float = MAX_RETRY_SLEEP_SECONDS
+    retry_deadline_seconds: float = DEFAULT_RETRY_DEADLINE_SECONDS
 
     def __post_init__(self) -> None:
         normalized = self.base_url.strip().rstrip("/")
@@ -68,6 +73,10 @@ class InferenceConfig:
             raise ValueError("Inference queue retries must be between 0 and 3")
         if self.queue_retry_backoff_seconds < 0:
             raise ValueError("Inference queue retry backoff cannot be negative")
+        if self.retry_sleep_cap_seconds < 0:
+            raise ValueError("Inference retry sleep cap cannot be negative")
+        if self.retry_deadline_seconds <= 0:
+            raise ValueError("Inference retry deadline must be positive")
         object.__setattr__(self, "base_url", normalized)
 
     @classmethod
@@ -131,6 +140,16 @@ class InferenceClient:
         self.config = config
         self._opener = opener
 
+    def _queue_retry_delay(self, error: InferenceClientError) -> float:
+        """Return the bounded delay before the next queue-admission retry.
+
+        Honors ``Retry-After`` but always caps a single sleep so an upstream
+        value like ``Retry-After: 86400`` cannot block the caller for a day.
+        """
+        delay = min(error.retry_after or 0.0, self.config.retry_sleep_cap_seconds)
+        jitter = random.uniform(0.0, self.config.queue_retry_backoff_seconds)
+        return min(delay + jitter, max(0.0, self.config.retry_sleep_cap_seconds))
+
     @classmethod
     def from_env(cls, **config_kwargs: Any) -> "InferenceClient":
         """Create a client from the shared environment-variable contract."""
@@ -173,7 +192,7 @@ class InferenceClient:
             payload["tools"] = [dict(tool) for tool in tools]
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
-        payload.update(options)
+        self._merge_options(payload, options)
         return self._request("POST", "chat/completions", payload, timeout=timeout)
 
     def stream(
@@ -196,9 +215,10 @@ class InferenceClient:
             payload["tools"] = [dict(tool) for tool in tools]
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
-        payload.update(options)
+        self._merge_options(payload, options)
         effective_timeout = timeout or self.config.timeout
         response = None
+        retry_deadline = time.monotonic() + self.config.retry_deadline_seconds
         for attempt in range(self.config.queue_retries + 1):
             request = Request(
                 self.config.endpoint("chat/completions"),
@@ -212,13 +232,13 @@ class InferenceClient:
             except HTTPError as exc:
                 detail = exc.read(MAX_ERROR_BYTES).decode(errors="replace")
                 error = self._http_error(exc, detail)
+                delay = self._queue_retry_delay(error)
                 if (
                     error.error_code not in QUEUE_REJECTION_CODES
                     or attempt >= self.config.queue_retries
+                    or time.monotonic() + delay > retry_deadline
                 ):
                     raise error from exc
-                delay = error.retry_after or 0.0
-                delay += random.uniform(0.0, self.config.queue_retry_backoff_seconds)
                 time.sleep(delay)
             except (URLError, OSError, TimeoutError) as exc:
                 reason = getattr(exc, "reason", None)
@@ -294,8 +314,25 @@ class InferenceClient:
     ) -> dict[str, Any]:
         """Create embeddings through the same gateway and authentication contract."""
         payload: dict[str, Any] = {"model": model, "input": inputs}
-        payload.update(options)
+        self._merge_options(payload, options)
         return self._request("POST", "embeddings", payload, timeout=timeout)
+
+    @staticmethod
+    def _merge_options(payload: dict[str, Any], options: Mapping[str, Any]) -> None:
+        """Merge caller options while reserving transport-critical keys.
+
+        ``model`` and ``stream`` describe which endpoint contract the caller
+        already chose; silently letting ``options`` flip them would corrupt the
+        request (an options ``stream=True`` on ``complete()`` makes the gateway
+        answer with an SSE body that cannot be decoded as JSON).
+        """
+        for key in RESERVED_OPTION_KEYS:
+            if key in options:
+                raise TypeError(
+                    f"'{key}' is controlled by the explicit method parameters "
+                    "and cannot be overridden through options"
+                )
+        payload.update(options)
 
     def _request(
         self,
@@ -307,6 +344,7 @@ class InferenceClient:
     ) -> dict[str, Any]:
         body = json.dumps(payload).encode("utf-8") if payload is not None else None
         effective_timeout = timeout or self.config.timeout
+        retry_deadline = time.monotonic() + self.config.retry_deadline_seconds
         for attempt in range(self.config.queue_retries + 1):
             request = Request(
                 self.config.endpoint(path),
@@ -321,13 +359,13 @@ class InferenceClient:
             except HTTPError as exc:
                 detail = exc.read(MAX_ERROR_BYTES).decode(errors="replace")
                 error = self._http_error(exc, detail)
+                delay = self._queue_retry_delay(error)
                 if (
                     error.error_code not in QUEUE_REJECTION_CODES
                     or attempt >= self.config.queue_retries
+                    or time.monotonic() + delay > retry_deadline
                 ):
                     raise error from exc
-                delay = error.retry_after or 0.0
-                delay += random.uniform(0.0, self.config.queue_retry_backoff_seconds)
                 time.sleep(delay)
                 continue
             except (URLError, OSError, TimeoutError) as exc:
