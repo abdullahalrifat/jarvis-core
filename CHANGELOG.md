@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.17.4
+
+### Reliability
+
+- `TokenLedger.record()` no longer leaks a reservation when commit-time validation raises `BudgetExceeded`; the hold is refunded automatically so one failed `record()` cannot permanently shrink the run or agent budget.
+- `InferenceClient` caps every retry sleep (`retry_sleep_cap_seconds`, default 30) and enforces a total retry deadline (`retry_deadline_seconds`, default 60), so an upstream `Retry-After: 86400` can no longer block a caller for a day.
+- `InferenceClient` rejects `model` and `stream` in caller options with a clear `TypeError` instead of silently letting options corrupt the transport contract or target model.
+- `normalize_tool_call()` now decodes OpenAI's on-the-wire JSON-string tool-call arguments into a mapping instead of raising `TypeError`; malformed JSON and non-object JSON raise a descriptive `TypeError`.
+- `InferenceConfig` validates the new retry bounds (`retry_sleep_cap_seconds >= 0`, `retry_deadline_seconds > 0`) at construction time.
+
+### Tests
+
+- Regression coverage: `record()` refund-on-failure, capped retry sleeps, deadline-terminated retries, options transport guard, JSON-string tool-call decoding (valid, empty, malformed, and non-object payloads).
+
 ## 0.17.3
 
 ### Reliability

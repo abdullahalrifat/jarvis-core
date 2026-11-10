@@ -426,3 +426,92 @@ def test_structured_sse_error_becomes_non_retryable_client_error():
     assert caught.value.error_code == "MODEL_TIMEOUT"
     assert caught.value.request_id == "req-1"
     assert caught.value.retryable is False
+
+
+def test_retry_after_sleep_is_capped_per_attempt(monkeypatch):
+    """Retry-After: 86400 must not block the caller for a day."""
+    sleeps = []
+
+    def opener(request, timeout):
+        raise HTTPError(
+            request.full_url,
+            429,
+            "queue timeout",
+            {"Retry-After": "86400"},
+            io.BytesIO(
+                b'{"detail":{"code":"QUEUE_TIMEOUT","message":"busy","retryable":true}}'
+            ),
+        )
+
+    monkeypatch.setattr("jarvis_core.inference_client.time.sleep", sleeps.append)
+    monkeypatch.setattr("jarvis_core.inference_client.random.uniform", lambda _a, _b: 0)
+    client = InferenceClient(InferenceConfig("http://inference/v1"), opener=opener)
+
+    with pytest.raises(InferenceClientError):
+        client.complete(
+            model="qwen3:1.7b", messages=[{"role": "user", "content": "hello"}]
+        )
+
+    assert sleeps == [30.0]
+
+
+def test_retry_deadline_stops_sleeping_beyond_the_time_budget(monkeypatch):
+    """A delay that would blow the total retry deadline raises immediately."""
+    sleeps = []
+
+    def opener(request, timeout):
+        raise HTTPError(
+            request.full_url,
+            429,
+            "queue timeout",
+            {"Retry-After": "120"},
+            io.BytesIO(
+                b'{"detail":{"code":"QUEUE_TIMEOUT","message":"busy","retryable":true}}'
+            ),
+        )
+
+    monkeypatch.setattr("jarvis_core.inference_client.time.sleep", sleeps.append)
+    monkeypatch.setattr("jarvis_core.inference_client.random.uniform", lambda _a, _b: 0)
+    client = InferenceClient(
+        InferenceConfig("http://inference/v1", retry_deadline_seconds=1.0),
+        opener=opener,
+    )
+
+    with pytest.raises(InferenceClientError) as caught:
+        client.complete(
+            model="qwen3:1.7b", messages=[{"role": "user", "content": "hello"}]
+        )
+
+    assert sleeps == []
+    assert caught.value.error_code == "QUEUE_TIMEOUT"
+
+
+def test_config_validates_retry_bounds():
+    with pytest.raises(ValueError):
+        InferenceConfig("http://inference/v1", retry_deadline_seconds=0)
+    with pytest.raises(ValueError):
+        InferenceConfig("http://inference/v1", retry_sleep_cap_seconds=-1.0)
+
+
+def test_options_cannot_flip_the_stream_transport():
+    client = InferenceClient(
+        InferenceConfig("http://inference/v1"),
+        opener=lambda _request, timeout: FakeResponse(b"{}"),
+    )
+
+    with pytest.raises(TypeError):
+        client.complete(
+            model="qwen3:1.7b",
+            messages=[{"role": "user", "content": "hello"}],
+            **{"stream": True},
+        )
+
+
+def test_options_cannot_override_the_model():
+    client = InferenceClient(
+        InferenceConfig("http://inference/v1"),
+        opener=lambda _request, timeout: FakeResponse(b"{}"),
+    )
+
+    with pytest.raises(TypeError):
+        client.embeddings(model="embed-1", inputs="hello", **{"model": "other"})

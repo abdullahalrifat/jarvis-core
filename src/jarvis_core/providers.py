@@ -8,6 +8,7 @@ application-specific retry/cancellation policy remain outside Core.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from typing import Any, Mapping, Protocol, Sequence
 
@@ -99,6 +100,14 @@ def normalize_tool_call(
     else:
         name = str(value.get("name") or "")
         arguments = value.get("arguments") or {}
+    if isinstance(arguments, str):
+        # OpenAI's wire format ships arguments as a JSON object string, not
+        # a mapping; decode it here so every consumer sees a mapping.
+        try:
+            decoded: Any = json.loads(arguments) if arguments else {}
+        except json.JSONDecodeError as exc:
+            raise TypeError("tool call arguments string is not valid JSON") from exc
+        arguments = decoded
     if not isinstance(arguments, Mapping):
         raise TypeError("tool call arguments must be a mapping")
     if not name:
